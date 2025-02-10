@@ -2,7 +2,7 @@ name: cassiopee_couture_app
 description: "A new Flutter project."
 
 # Prevent accidental publishing to pub.dev.
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -14,12 +14,23 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  drift: ^2.15.0
+  sqlite3: ^2.1.0
+  sqlite3_flutter_libs: ^0.5.0
+  path_provider: ^2.0.0
+  path: ^1.8.3
+  table_calendar: ^3.0.9
+  image_picker: ^1.0.7
+  flutter_gen: ^5.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  mockito: ^5.4.4
+  test: ^1.24.9
   flutter_lints: ^5.0.0
+  drift_dev: ^2.15.0
+  build_runner: ^2.4.8
 
 flutter:
   uses-material-design: true
@@ -30,3 +41,9 @@ flutter:
   assets:
     # Add assets from the images directory to the application.
     - assets/images/
+
+  # fonts:
+  #   - family: AcuminProWide
+  #     fonts:
+  #       - asset: assets/fonts/AcuminProWideThin.otf
+  #         weight: 300

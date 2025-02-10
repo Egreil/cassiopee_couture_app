@@ -1,0 +1,11 @@
+---
+description: La charte graphique de l'application
+globs: *
+---
+
+# Your rule content
+
+- Couleur background Terracotta : #e0897c
+- Couleur blanc_casse: #fbf9f2
+- Police de texte baseline : Acumin Pro Wide Thin
+# - url du logo:
