@@ -1,0 +1,2 @@
+C:/Users/egreil/Documents/cassiopee_couture_app/android/app/.cxx/Debug/ix1p1i6z/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/egreil/Documents/cassiopee_couture_app/android/app/.cxx/Debug/ix1p1i6z/armeabi-v7a/CMakeFiles/rebuild_cache.dir

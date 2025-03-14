@@ -340,6 +340,7 @@ class _RendezVousFormViewState extends State<RendezVousFormView> {
           final result = await widget.database
               .into(widget.database.rendezVous)
               .insert(rdv);
+
           print('Résultat de l\'insertion: $result');
         } else {
           await (widget.database.update(widget.database.rendezVous)

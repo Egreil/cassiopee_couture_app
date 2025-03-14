@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:drift/drift.dart'
     show OrderingMode, OrderingTerm, TableOrViewStatements;
 import 'package:flutter/material.dart';
@@ -20,20 +22,58 @@ class _DatabaseViewState extends State<DatabaseView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 7, vsync: this);
-    // Écouter les changements de la base de données
+    print("DatabaseView - initState called");
+    _tabController = TabController(
+      length: 7,
+      vsync: this,
+    );
+
+    _tabController.addListener(() {
+      print("Changement d'onglet vers l'index: ${_tabController.index}");
+      setState(() {});
+    });
+
+    // Écouter les changements pour chaque table
     widget.database.select(widget.database.rendezVous).watch().listen((_) {
-      if (mounted && _tabController.index == 0) {
-        // 0 est l'index de l'onglet rendez-vous
-        setState(() {}); // Force la reconstruction
-      }
+      if (mounted && _tabController.index == 0) setState(() {});
+    });
+
+    widget.database.select(widget.database.clients).watch().listen((_) {
+      if (mounted && _tabController.index == 1) setState(() {});
+    });
+
+    widget.database.select(widget.database.vetements).watch().listen((_) {
+      if (mounted && _tabController.index == 2) setState(() {});
+    });
+
+    widget.database.select(widget.database.reservations).watch().listen((_) {
+      if (mounted && _tabController.index == 3) setState(() {});
+    });
+
+    widget.database.select(widget.database.cautions).watch().listen((_) {
+      if (mounted && _tabController.index == 4) setState(() {});
+    });
+
+    widget.database.select(widget.database.acomptes).watch().listen((_) {
+      if (mounted && _tabController.index == 5) setState(() {});
+    });
+
+    widget.database.select(widget.database.photos).watch().listen((_) {
+      if (mounted && _tabController.index == 6) setState(() {});
     });
   }
 
   @override
   void dispose() {
+    print("DatabaseView - dispose called");
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  void deactivate() {
+    print("DatabaseView - deactivate called");
+    super.deactivate();
   }
 
   @override
@@ -41,6 +81,10 @@ class _DatabaseViewState extends State<DatabaseView>
     return Scaffold(
       backgroundColor: AppTheme.blancCasse,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: const Text('Contenu de la base de données'),
         actions: [
           IconButton(
@@ -65,16 +109,13 @@ class _DatabaseViewState extends State<DatabaseView>
       body: TabBarView(
         controller: _tabController,
         children: [
-          _RendezVousTab(
-              database: widget.database,
-              key:
-                  UniqueKey()), // Forcer la reconstruction avec une nouvelle clé
-          _buildClientsTab(),
-          _buildVetementsTab(),
-          _buildReservationsTab(),
-          _buildCautionsTab(),
-          _buildAcomptesTab(),
-          _buildPhotosTab(),
+          _RendezVousTab(database: widget.database, key: UniqueKey()),
+          _buildClientsTab(key: UniqueKey()),
+          _buildVetementsTab(key: UniqueKey()),
+          _buildReservationsTab(key: UniqueKey()),
+          _buildCautionsTab(key: UniqueKey()),
+          _buildAcomptesTab(key: UniqueKey()),
+          _buildPhotosTab(key: UniqueKey()),
         ],
       ),
     );
@@ -129,14 +170,20 @@ class _DatabaseViewState extends State<DatabaseView>
     }
   }
 
-  Widget _buildClientsTab() {
+  Widget _buildClientsTab({Key? key}) {
+    print("Construction du widget Clients");
     return StreamBuilder<List<Client>>(
-      stream: widget.database.select(widget.database.clients).watch(),
+      stream: (() {
+        print("Création d'un nouveau stream pour Clients");
+        return widget.database.select(widget.database.clients).watch();
+      })(),
       builder: (context, snapshot) {
+        print("État du StreamBuilder Clients: ${snapshot.connectionState}");
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
         final clients = snapshot.data!;
+        print("Nombre de clients chargés: ${clients.length}");
         return ListView.builder(
           itemCount: clients.length,
           itemBuilder: (context, index) {
@@ -162,8 +209,9 @@ class _DatabaseViewState extends State<DatabaseView>
     );
   }
 
-  Widget _buildVetementsTab() {
+  Widget _buildVetementsTab({Key? key}) {
     return StreamBuilder<List<Vetement>>(
+      key: key,
       stream: widget.database.select(widget.database.vetements).watch(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -195,8 +243,9 @@ class _DatabaseViewState extends State<DatabaseView>
     );
   }
 
-  Widget _buildReservationsTab() {
+  Widget _buildReservationsTab({Key? key}) {
     return StreamBuilder<List<Reservation>>(
+      key: key,
       stream: widget.database.select(widget.database.reservations).watch(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -228,8 +277,9 @@ class _DatabaseViewState extends State<DatabaseView>
     );
   }
 
-  Widget _buildCautionsTab() {
+  Widget _buildCautionsTab({Key? key}) {
     return StreamBuilder<List<Caution>>(
+      key: key,
       stream: widget.database.select(widget.database.cautions).watch(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -263,8 +313,9 @@ class _DatabaseViewState extends State<DatabaseView>
     );
   }
 
-  Widget _buildAcomptesTab() {
+  Widget _buildAcomptesTab({Key? key}) {
     return StreamBuilder<List<Acompte>>(
+      key: key,
       stream: widget.database.select(widget.database.acomptes).watch(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
@@ -296,8 +347,9 @@ class _DatabaseViewState extends State<DatabaseView>
     );
   }
 
-  Widget _buildPhotosTab() {
+  Widget _buildPhotosTab({Key? key}) {
     return StreamBuilder<List<Photo>>(
+      key: key,
       stream: widget.database.select(widget.database.photos).watch(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
