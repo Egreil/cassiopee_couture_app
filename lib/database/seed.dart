@@ -24,6 +24,7 @@ class DatabaseSeeder {
   }
 
   Future<void> seedDatabase() async {
+    final today = DateTime.now();
     // Clients
     final clients = [
       ClientsCompanion.insert(
@@ -85,6 +86,36 @@ class DatabaseSeeder {
         tourPoitrine: const Value(88),
         commentaire: const Value('Top en dentelle fine'),
       ),
+      VetementsCompanion.insert(
+        nom: 'Robe Cocktail',
+        couleurs: 'Rouge',
+        category: 'robe',
+        longueurTotale: 120,
+        prix: 250.0,
+        tourTaille: const Value(75),
+        tourPoitrine: const Value(92),
+        commentaire: const Value('Robe cocktail élégante'),
+      ),
+      VetementsCompanion.insert(
+        nom: 'Tailleur Pantalon',
+        couleurs: 'Gris',
+        category: 'ensemble',
+        longueurTotale: 140,
+        prix: 120.0,
+        tourTaille: const Value(68),
+        tourPoitrine: const Value(88),
+        commentaire: const Value('Tailleur professionnel'),
+      ),
+      VetementsCompanion.insert(
+        nom: 'Robe Longue Fleurie',
+        couleurs: 'Multicolore',
+        category: 'robe',
+        longueurTotale: 160,
+        prix: 85.0,
+        tourTaille: const Value(72),
+        tourPoitrine: const Value(86),
+        commentaire: const Value('Robe d\'été longue'),
+      ),
     ];
 
     for (final vetement in vetements) {
@@ -98,50 +129,135 @@ class DatabaseSeeder {
             url: 'assets/images/robe_noire.jpg',
           ),
         );
+
+    // Réservations pour les cautions
+    await db.batch((batch) {
+      // Réservation 1 (pour caution à rendre)
+      batch.insert(
+        db.reservations,
+        ReservationsCompanion.insert(
+          idClient: 1,
+          idVetement: 1,
+          dateReservation: DateTime(today.year, today.month, today.day - 16),
+          dateSortie: DateTime(today.year, today.month, today.day - 15),
+          dateRetour: Value(DateTime(today.year, today.month, today.day + 1)),
+        ),
+      );
+
+      // Réservation 2 (pour caution en attente)
+      batch.insert(
+          db.reservations,
+          ReservationsCompanion.insert(
+            idClient: 2,
+            idVetement: 2,
+            dateReservation: DateTime(today.year, today.month, today.day),
+            dateSortie: DateTime(
+                today.year, today.month, today.day + 1), // Sortie demain
+            dateRetour: Value(DateTime(today.year, today.month, today.day + 7)),
+          ));
+
+      // Réservation 3 (pour caution en attente)
+      batch.insert(
+        db.reservations,
+        ReservationsCompanion.insert(
+          idClient: 3,
+          idVetement: 3,
+          dateReservation: DateTime(today.year, today.month, today.day),
+          dateSortie: DateTime(
+              today.year, today.month, today.day + 2), // Sortie après-demain
+          dateRetour: Value(DateTime(today.year, today.month, today.day + 9)),
+        ),
+      );
+    });
+
+    // Cautions liées aux réservations
+    await db.batch((batch) {
+      // Caution à rendre (AR)
+      batch.insert(
+        db.cautions,
+        CautionsCompanion.insert(
+          montant: 150.0,
+          dateReception: DateTime(today.year, today.month, today.day - 10),
+          statut: CautionStatus.AR,
+          idReservation: 1,
+        ),
+      );
+
+      // Caution en attente (EA)
+      batch.insert(
+        db.cautions,
+        CautionsCompanion.insert(
+          montant: 200.0,
+          dateReception: DateTime(today.year, today.month, today.day - 5),
+          statut: CautionStatus.EA,
+          idReservation: 2,
+        ),
+      );
+
+      // Une autre caution en attente (EA)
+      batch.insert(
+        db.cautions,
+        CautionsCompanion.insert(
+          montant: 175.0,
+          dateReception: DateTime(today.year, today.month, today.day - 3),
+          statut: CautionStatus.EA,
+          idReservation: 3,
+        ),
+      );
+    });
   }
 
   Future<void> seedTodayTasks() async {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = DateTime.now();
+    final startOfDay = DateTime(today.year, today.month, today.day);
 
-    // Récupérer les IDs des clients existants
-    final clientIds = await (db.select(db.clients)..limit(21))
-        .map((client) => client.id)
-        .get();
-
-    if (clientIds.isEmpty) {
-      print('Aucun client trouvé en base de données');
+    // Récupérer les 3 clients existants
+    final clients = await (db.select(db.clients)).get();
+    if (clients.length < 3) {
+      print('Erreur: Il faut au moins 3 clients en base de données');
       return;
     }
 
-    // 3 Rendez-vous aujourd'hui
-    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clientIds[0],
-          date: today.add(const Duration(hours: 9)),
-          heure: '09:00',
-          duree: const Duration(minutes: 30),
-          motif: MotifRendezVous.consultation,
-        ));
+    // Créer d'abord les réservations
+    final reservation1 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 1,
+            idClient: clients[0].id,
+            dateReservation:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 5),
+            dateSortie:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 2),
+            dateRetour: Value(startOfDay),
+          ),
+        );
 
-    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clientIds[1],
-          date: today.add(const Duration(hours: 14)),
-          heure: '14:00',
-          duree: const Duration(minutes: 45),
-          motif: MotifRendezVous.essayage,
-        ));
+    final reservation2 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 2,
+            idClient: clients[1].id,
+            dateReservation:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 4),
+            dateSortie:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 1),
+            dateRetour: Value(startOfDay),
+          ),
+        );
 
-    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clientIds[2],
-          date: today.add(const Duration(hours: 16)),
-          heure: '16:00',
-          duree: const Duration(minutes: 30),
-          motif: MotifRendezVous.retour,
-        ));
+    final reservation3 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 3,
+            idClient: clients[2].id,
+            dateReservation:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 3),
+            dateSortie:
+                DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 1),
+            dateRetour: Value(startOfDay),
+          ),
+        );
 
-    // 3 Cautions à rendre
+    // Créer les cautions avec les IDs des réservations
     await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 1,
+          idReservation: reservation1.id,
           statut: CautionStatus.AR,
           montant: 200.0,
           dateReception: today.subtract(const Duration(days: 30)),
@@ -149,7 +265,7 @@ class DatabaseSeeder {
         ));
 
     await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 2,
+          idReservation: reservation2.id,
           statut: CautionStatus.AR,
           montant: 150.0,
           dateReception: today.subtract(const Duration(days: 20)),
@@ -157,133 +273,108 @@ class DatabaseSeeder {
         ));
 
     await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 3,
+          idReservation: reservation3.id,
           statut: CautionStatus.AR,
           montant: 300.0,
           dateReception: today.subtract(const Duration(days: 15)),
           dateRendu: Value(today),
         ));
 
-    // 3 Cautions à recevoir
-    await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 4,
-          statut: CautionStatus.EA,
-          montant: 250.0,
-          dateReception: today,
-          dateRendu: const Value(null),
-        ));
-
-    await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 5,
-          statut: CautionStatus.EA,
-          montant: 180.0,
-          dateReception: today,
-          dateRendu: const Value(null),
-        ));
-
-    await db.into(db.cautions).insert(CautionsCompanion.insert(
-          idReservation: 6,
-          statut: CautionStatus.EA,
-          montant: 220.0,
-          dateReception: today,
-          dateRendu: const Value(null),
-        ));
-
-    // 3 Retours prévus
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 1,
-          idClient: clientIds[6],
-          dateEntree: today.subtract(const Duration(days: 10)),
-          dateReservation: today.subtract(const Duration(days: 5)),
-          dateSortie: today.subtract(const Duration(days: 2)),
-          dateRetour: Value(today),
-        ));
-
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 2,
-          idClient: clientIds[7],
-          dateEntree: today.subtract(const Duration(days: 8)),
-          dateReservation: today.subtract(const Duration(days: 4)),
-          dateSortie: today.subtract(const Duration(days: 1)),
-          dateRetour: Value(today),
-        ));
-
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 3,
-          idClient: clientIds[8],
-          dateEntree: today.subtract(const Duration(days: 7)),
-          dateReservation: today.subtract(const Duration(days: 3)),
-          dateSortie: today.subtract(const Duration(days: 1)),
-          dateRetour: Value(today),
-        ));
-
-    // 3 Départs prévus
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 4,
-          idClient: clientIds[9],
-          dateEntree: today.subtract(const Duration(days: 5)),
-          dateReservation: today,
-          dateSortie: today,
-          dateRetour: Value(today.add(const Duration(days: 5))),
-        ));
-
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 5,
-          idClient: clientIds[10],
-          dateEntree: today.subtract(const Duration(days: 3)),
-          dateReservation: today,
-          dateSortie: today,
-          dateRetour: Value(today.add(const Duration(days: 7))),
-        ));
-
-    await db.into(db.reservations).insert(ReservationsCompanion.insert(
-          idVetement: 6,
-          idClient: clientIds[11],
-          dateEntree: today.subtract(const Duration(days: 2)),
-          dateReservation: today,
-          dateSortie: today,
-          dateRetour: Value(today.add(const Duration(days: 6))),
-        ));
-
-    // 3 Acomptes à recevoir
+    // Créer les acomptes avec les IDs des réservations
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 7,
+          idReservation: reservation1.id,
           montant: 50.0,
           paye: 0,
           datePaiement: today,
         ));
 
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 8,
+          idReservation: reservation2.id,
           montant: 75.0,
           paye: 0,
           datePaiement: today,
         ));
 
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 9,
+          idReservation: reservation3.id,
           montant: 60.0,
           paye: 0,
           datePaiement: today,
         ));
 
-    // 3 Paiements à recevoir
+    // 3 Rendez-vous aujourd'hui
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clients[0].id, // Emma Dubois
+          date: DateTime(today.year, today.month, today.day), // Juste la date
+          heure: '09:00',
+          duree: const Duration(minutes: 30),
+          motif: MotifRendezVous.consultation,
+        ));
+
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clients[1].id, // Sophie Bernard
+          date: today.add(const Duration(hours: 14)),
+          heure: '14:00',
+          duree: const Duration(minutes: 45),
+          motif: MotifRendezVous.essayage,
+        ));
+
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clients[2].id, // Marie Petit
+          date: today.add(const Duration(hours: 16)),
+          heure: '16:00',
+          duree: const Duration(minutes: 30),
+          motif: MotifRendezVous.retour,
+        ));
+
+    // 3 Départs prévus
+    final depart1 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 4,
+            idClient: clients[0].id,
+            dateReservation: today,
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 5))),
+          ),
+        );
+
+    final depart2 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 5,
+            idClient: clients[1].id,
+            dateReservation: today,
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 7))),
+          ),
+        );
+
+    final depart3 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 6,
+            idClient: clients[2].id,
+            dateReservation: today,
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 6))),
+          ),
+        );
+
+    // 3 Paiements à recevoir (utilisant les IDs des réservations de départ)
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 10,
+          idReservation: depart1.id,
           montant: 250.0, // Prix complet du vêtement
           paye: 0,
           datePaiement: today,
         ));
 
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 11,
+          idReservation: depart2.id,
           montant: 120.0, // Prix complet du vêtement
           paye: 0,
           datePaiement: today,
         ));
 
     await db.into(db.acomptes).insert(AcomptesCompanion.insert(
-          idReservation: 12,
+          idReservation: depart3.id,
           montant: 85.0, // Prix complet du vêtement
           paye: 0,
           datePaiement: today,
@@ -297,7 +388,7 @@ class DatabaseSeeder {
 
       // Ensuite supprimer le fichier
       final dbFolder = await getApplicationDocumentsDirectory();
-      final file = File(p.join(dbFolder.path, 'location_vetements.db'));
+      final file = File(p.join(dbFolder.path, 'db.sqlite'));
       if (await file.exists()) {
         await file.delete();
         print('Base de données supprimée avec succès');

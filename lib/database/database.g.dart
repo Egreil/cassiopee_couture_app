@@ -1061,12 +1061,6 @@ class $ReservationsTable extends Reservations
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES clients (id)'));
-  static const VerificationMeta _dateEntreeMeta =
-      const VerificationMeta('dateEntree');
-  @override
-  late final GeneratedColumn<DateTime> dateEntree = GeneratedColumn<DateTime>(
-      'date_entree', aliasedName, false,
-      type: DriftSqlType.dateTime, requiredDuringInsert: true);
   static const VerificationMeta _dateReservationMeta =
       const VerificationMeta('dateReservation');
   @override
@@ -1086,15 +1080,8 @@ class $ReservationsTable extends Reservations
       'date_retour', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        idVetement,
-        idClient,
-        dateEntree,
-        dateReservation,
-        dateSortie,
-        dateRetour
-      ];
+  List<GeneratedColumn> get $columns =>
+      [id, idVetement, idClient, dateReservation, dateSortie, dateRetour];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1121,14 +1108,6 @@ class $ReservationsTable extends Reservations
           idClient.isAcceptableOrUnknown(data['id_client']!, _idClientMeta));
     } else if (isInserting) {
       context.missing(_idClientMeta);
-    }
-    if (data.containsKey('date_entree')) {
-      context.handle(
-          _dateEntreeMeta,
-          dateEntree.isAcceptableOrUnknown(
-              data['date_entree']!, _dateEntreeMeta));
-    } else if (isInserting) {
-      context.missing(_dateEntreeMeta);
     }
     if (data.containsKey('date_reservation')) {
       context.handle(
@@ -1167,8 +1146,6 @@ class $ReservationsTable extends Reservations
           .read(DriftSqlType.int, data['${effectivePrefix}id_vetement'])!,
       idClient: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id_client'])!,
-      dateEntree: attachedDatabase.typeMapping
-          .read(DriftSqlType.dateTime, data['${effectivePrefix}date_entree'])!,
       dateReservation: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}date_reservation'])!,
       dateSortie: attachedDatabase.typeMapping
@@ -1188,7 +1165,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   final int id;
   final int idVetement;
   final int idClient;
-  final DateTime dateEntree;
   final DateTime dateReservation;
   final DateTime dateSortie;
   final DateTime? dateRetour;
@@ -1196,7 +1172,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
       {required this.id,
       required this.idVetement,
       required this.idClient,
-      required this.dateEntree,
       required this.dateReservation,
       required this.dateSortie,
       this.dateRetour});
@@ -1206,7 +1181,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
     map['id'] = Variable<int>(id);
     map['id_vetement'] = Variable<int>(idVetement);
     map['id_client'] = Variable<int>(idClient);
-    map['date_entree'] = Variable<DateTime>(dateEntree);
     map['date_reservation'] = Variable<DateTime>(dateReservation);
     map['date_sortie'] = Variable<DateTime>(dateSortie);
     if (!nullToAbsent || dateRetour != null) {
@@ -1220,7 +1194,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
       id: Value(id),
       idVetement: Value(idVetement),
       idClient: Value(idClient),
-      dateEntree: Value(dateEntree),
       dateReservation: Value(dateReservation),
       dateSortie: Value(dateSortie),
       dateRetour: dateRetour == null && nullToAbsent
@@ -1236,7 +1209,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
       id: serializer.fromJson<int>(json['id']),
       idVetement: serializer.fromJson<int>(json['idVetement']),
       idClient: serializer.fromJson<int>(json['idClient']),
-      dateEntree: serializer.fromJson<DateTime>(json['dateEntree']),
       dateReservation: serializer.fromJson<DateTime>(json['dateReservation']),
       dateSortie: serializer.fromJson<DateTime>(json['dateSortie']),
       dateRetour: serializer.fromJson<DateTime?>(json['dateRetour']),
@@ -1249,7 +1221,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
       'id': serializer.toJson<int>(id),
       'idVetement': serializer.toJson<int>(idVetement),
       'idClient': serializer.toJson<int>(idClient),
-      'dateEntree': serializer.toJson<DateTime>(dateEntree),
       'dateReservation': serializer.toJson<DateTime>(dateReservation),
       'dateSortie': serializer.toJson<DateTime>(dateSortie),
       'dateRetour': serializer.toJson<DateTime?>(dateRetour),
@@ -1260,7 +1231,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
           {int? id,
           int? idVetement,
           int? idClient,
-          DateTime? dateEntree,
           DateTime? dateReservation,
           DateTime? dateSortie,
           Value<DateTime?> dateRetour = const Value.absent()}) =>
@@ -1268,7 +1238,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
         id: id ?? this.id,
         idVetement: idVetement ?? this.idVetement,
         idClient: idClient ?? this.idClient,
-        dateEntree: dateEntree ?? this.dateEntree,
         dateReservation: dateReservation ?? this.dateReservation,
         dateSortie: dateSortie ?? this.dateSortie,
         dateRetour: dateRetour.present ? dateRetour.value : this.dateRetour,
@@ -1279,8 +1248,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
       idVetement:
           data.idVetement.present ? data.idVetement.value : this.idVetement,
       idClient: data.idClient.present ? data.idClient.value : this.idClient,
-      dateEntree:
-          data.dateEntree.present ? data.dateEntree.value : this.dateEntree,
       dateReservation: data.dateReservation.present
           ? data.dateReservation.value
           : this.dateReservation,
@@ -1297,7 +1264,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
           ..write('id: $id, ')
           ..write('idVetement: $idVetement, ')
           ..write('idClient: $idClient, ')
-          ..write('dateEntree: $dateEntree, ')
           ..write('dateReservation: $dateReservation, ')
           ..write('dateSortie: $dateSortie, ')
           ..write('dateRetour: $dateRetour')
@@ -1306,8 +1272,8 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   }
 
   @override
-  int get hashCode => Object.hash(id, idVetement, idClient, dateEntree,
-      dateReservation, dateSortie, dateRetour);
+  int get hashCode => Object.hash(
+      id, idVetement, idClient, dateReservation, dateSortie, dateRetour);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1315,7 +1281,6 @@ class Reservation extends DataClass implements Insertable<Reservation> {
           other.id == this.id &&
           other.idVetement == this.idVetement &&
           other.idClient == this.idClient &&
-          other.dateEntree == this.dateEntree &&
           other.dateReservation == this.dateReservation &&
           other.dateSortie == this.dateSortie &&
           other.dateRetour == this.dateRetour);
@@ -1325,7 +1290,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
   final Value<int> id;
   final Value<int> idVetement;
   final Value<int> idClient;
-  final Value<DateTime> dateEntree;
   final Value<DateTime> dateReservation;
   final Value<DateTime> dateSortie;
   final Value<DateTime?> dateRetour;
@@ -1333,7 +1297,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
     this.id = const Value.absent(),
     this.idVetement = const Value.absent(),
     this.idClient = const Value.absent(),
-    this.dateEntree = const Value.absent(),
     this.dateReservation = const Value.absent(),
     this.dateSortie = const Value.absent(),
     this.dateRetour = const Value.absent(),
@@ -1342,20 +1305,17 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
     this.id = const Value.absent(),
     required int idVetement,
     required int idClient,
-    required DateTime dateEntree,
     required DateTime dateReservation,
     required DateTime dateSortie,
     this.dateRetour = const Value.absent(),
   })  : idVetement = Value(idVetement),
         idClient = Value(idClient),
-        dateEntree = Value(dateEntree),
         dateReservation = Value(dateReservation),
         dateSortie = Value(dateSortie);
   static Insertable<Reservation> custom({
     Expression<int>? id,
     Expression<int>? idVetement,
     Expression<int>? idClient,
-    Expression<DateTime>? dateEntree,
     Expression<DateTime>? dateReservation,
     Expression<DateTime>? dateSortie,
     Expression<DateTime>? dateRetour,
@@ -1364,7 +1324,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
       if (id != null) 'id': id,
       if (idVetement != null) 'id_vetement': idVetement,
       if (idClient != null) 'id_client': idClient,
-      if (dateEntree != null) 'date_entree': dateEntree,
       if (dateReservation != null) 'date_reservation': dateReservation,
       if (dateSortie != null) 'date_sortie': dateSortie,
       if (dateRetour != null) 'date_retour': dateRetour,
@@ -1375,7 +1334,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
       {Value<int>? id,
       Value<int>? idVetement,
       Value<int>? idClient,
-      Value<DateTime>? dateEntree,
       Value<DateTime>? dateReservation,
       Value<DateTime>? dateSortie,
       Value<DateTime?>? dateRetour}) {
@@ -1383,7 +1341,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
       id: id ?? this.id,
       idVetement: idVetement ?? this.idVetement,
       idClient: idClient ?? this.idClient,
-      dateEntree: dateEntree ?? this.dateEntree,
       dateReservation: dateReservation ?? this.dateReservation,
       dateSortie: dateSortie ?? this.dateSortie,
       dateRetour: dateRetour ?? this.dateRetour,
@@ -1401,9 +1358,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
     }
     if (idClient.present) {
       map['id_client'] = Variable<int>(idClient.value);
-    }
-    if (dateEntree.present) {
-      map['date_entree'] = Variable<DateTime>(dateEntree.value);
     }
     if (dateReservation.present) {
       map['date_reservation'] = Variable<DateTime>(dateReservation.value);
@@ -1423,7 +1377,6 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
           ..write('id: $id, ')
           ..write('idVetement: $idVetement, ')
           ..write('idClient: $idClient, ')
-          ..write('dateEntree: $dateEntree, ')
           ..write('dateReservation: $dateReservation, ')
           ..write('dateSortie: $dateSortie, ')
           ..write('dateRetour: $dateRetour')
@@ -3416,7 +3369,6 @@ typedef $$ReservationsTableCreateCompanionBuilder = ReservationsCompanion
   Value<int> id,
   required int idVetement,
   required int idClient,
-  required DateTime dateEntree,
   required DateTime dateReservation,
   required DateTime dateSortie,
   Value<DateTime?> dateRetour,
@@ -3426,7 +3378,6 @@ typedef $$ReservationsTableUpdateCompanionBuilder = ReservationsCompanion
   Value<int> id,
   Value<int> idVetement,
   Value<int> idClient,
-  Value<DateTime> dateEntree,
   Value<DateTime> dateReservation,
   Value<DateTime> dateSortie,
   Value<DateTime?> dateRetour,
@@ -3508,9 +3459,6 @@ class $$ReservationsTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get dateEntree => $composableBuilder(
-      column: $table.dateEntree, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation,
@@ -3617,9 +3565,6 @@ class $$ReservationsTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<DateTime> get dateEntree => $composableBuilder(
-      column: $table.dateEntree, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation,
       builder: (column) => ColumnOrderings(column));
@@ -3682,9 +3627,6 @@ class $$ReservationsTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get dateEntree => $composableBuilder(
-      column: $table.dateEntree, builder: (column) => column);
 
   GeneratedColumn<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation, builder: (column) => column);
@@ -3808,7 +3750,6 @@ class $$ReservationsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<int> idVetement = const Value.absent(),
             Value<int> idClient = const Value.absent(),
-            Value<DateTime> dateEntree = const Value.absent(),
             Value<DateTime> dateReservation = const Value.absent(),
             Value<DateTime> dateSortie = const Value.absent(),
             Value<DateTime?> dateRetour = const Value.absent(),
@@ -3817,7 +3758,6 @@ class $$ReservationsTableTableManager extends RootTableManager<
             id: id,
             idVetement: idVetement,
             idClient: idClient,
-            dateEntree: dateEntree,
             dateReservation: dateReservation,
             dateSortie: dateSortie,
             dateRetour: dateRetour,
@@ -3826,7 +3766,6 @@ class $$ReservationsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             required int idVetement,
             required int idClient,
-            required DateTime dateEntree,
             required DateTime dateReservation,
             required DateTime dateSortie,
             Value<DateTime?> dateRetour = const Value.absent(),
@@ -3835,7 +3774,6 @@ class $$ReservationsTableTableManager extends RootTableManager<
             id: id,
             idVetement: idVetement,
             idClient: idClient,
-            dateEntree: dateEntree,
             dateReservation: dateReservation,
             dateSortie: dateSortie,
             dateRetour: dateRetour,

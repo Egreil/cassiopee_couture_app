@@ -317,37 +317,36 @@ class _RendezVousFormViewState extends State<RendezVousFormView> {
       if (_selectedDate == null || _selectedTime == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Veuillez sélectionner une date et une heure'),
-          ),
+              content: Text('Veuillez sélectionner une date et une heure')),
         );
         return;
       }
 
       try {
-        final dateTime = DateTime(
-          _selectedDate!.year,
-          _selectedDate!.month,
-          _selectedDate!.day,
-          _selectedTime!.hour,
-          _selectedTime!.minute,
-        );
+        final date = DateTime(
+            _selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
+        print('Tentative d\'insertion du rendez-vous...');
 
         if (widget.rendezVous == null) {
-          await widget.database.into(widget.database.rendezVous).insert(
-                RendezVousCompanion.insert(
-                  idClient: _selectedClient!.id,
-                  date: dateTime,
-                  heure: _selectedTime!.format(context),
-                  duree: const Duration(minutes: 30),
-                  motif: _selectedType,
-                ),
-              );
+          final rdv = RendezVousCompanion.insert(
+            idClient: _selectedClient!.id,
+            date: date,
+            heure: _selectedTime!.format(context),
+            duree: const Duration(minutes: 30),
+            motif: _selectedType,
+          );
+          print('Données à insérer: $rdv');
+
+          final result = await widget.database
+              .into(widget.database.rendezVous)
+              .insert(rdv);
+          print('Résultat de l\'insertion: $result');
         } else {
           await (widget.database.update(widget.database.rendezVous)
                 ..where((r) => r.id.equals(widget.rendezVous!.id)))
               .write(
             RendezVousCompanion(
-              date: Value(dateTime),
+              date: Value(date),
               heure: Value(_selectedTime!.format(context)),
               duree: Value(const Duration(minutes: 30)),
               motif: Value(_selectedType),
@@ -365,7 +364,9 @@ class _RendezVousFormViewState extends State<RendezVousFormView> {
           );
           Navigator.pop(context);
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        print('Erreur lors de l\'insertion: $e');
+        print('Stack trace: $stackTrace');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Erreur: $e')),

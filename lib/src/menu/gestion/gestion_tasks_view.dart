@@ -1,9 +1,12 @@
 import 'package:cassiopee_couture_app/database/tables.dart';
-import 'package:cassiopee_couture_app/src/menu/gestion/rendez_vous_form_view.dart';
-import 'package:drift/drift.dart' show ComparableExpr, OrderingTerm, innerJoin;
+import 'package:drift/drift.dart' show TableOrViewStatements;
 import 'package:flutter/material.dart';
 import '../../../database/database.dart';
 import '../../theme/app_theme.dart';
+import 'components/rendez_vous_section.dart';
+import 'components/cautions/cautions_section.dart';
+import 'components/retours_section.dart';
+import 'components/acomptes_section.dart';
 
 class GestionTasksView extends StatefulWidget {
   final AppDatabase database;
@@ -43,478 +46,158 @@ class _GestionTasksViewState extends State<GestionTasksView>
   }
 
   @override
-  void dispose() {
-    _tabController.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.blancCasse,
-      appBar: AppBar(
-        title: const Text('Tâches du jour'),
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
-          onTap: (index) {
-            final position =
-                (index * _scrollController.position.maxScrollExtent) /
-                    (_tabs.length - 1);
-            _scrollController.animateTo(
-              position,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
-          },
-        ),
-      ),
-      body: SingleChildScrollView(
-        controller: _scrollController,
-        child: Column(
-          children: _tabs.map((tab) => _buildSection(tab)).toList(),
-        ),
-      ),
+    return StreamBuilder<void>(
+      // Écouter les changements dans la table rendez_vous
+      stream: widget.database.select(widget.database.rendezVous).watch(),
+      builder: (context, snapshot) {
+        return Scaffold(
+          backgroundColor: AppTheme.blancCasse,
+          appBar: AppBar(
+            title: const Text('Tâches du jour'),
+            bottom: TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
+              onTap: (index) {
+                final position =
+                    (index * _scrollController.position.maxScrollExtent) /
+                        (_tabs.length - 1);
+                _scrollController.animateTo(
+                  position,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+            ),
+          ),
+          body: SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: _tabs.map((tab) => _buildSection(tab)).toList(),
+            ),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildSection(String title) {
     return Container(
+      width: double.infinity,
       constraints: const BoxConstraints(
         minHeight: 100,
       ),
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.black12,
-            width: 1,
-          ),
-        ),
-      ),
-      child: StreamBuilder<List<dynamic>>(
-        stream: _getDataForSection(title),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            print('Erreur dans $title: ${snapshot.error}');
-            return Text('Erreur: ${snapshot.error}');
-          }
-
-          final items = snapshot.data ?? [];
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Divider(height: 1, color: Colors.black12),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppTheme.textDark,
+                    ),
               ),
-              const SizedBox(height: 16),
-              if (items.isEmpty)
-                const Icon(
-                  Icons.check_circle_outline,
-                  color: Colors.green,
-                  size: 24,
-                )
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('${items.length} tâches à traiter'),
-                    const SizedBox(height: 8),
-                    if (title == 'Rendez-vous')
-                      _buildRendezVousSection(
-                          items.cast<RendezVousWithClient>())
-                    else if (title == 'Cautions à rendre' ||
-                        title == 'Cautions à recevoir')
-                      _buildCautionsSection(
-                          items.cast<CautionWithClientAndReservation>())
-                    else if (title == 'Retours' || title == 'Départs')
-                      _buildRetoursSection(
-                          items.cast<RetourWithClientAndVetement>())
-                    else if (title == 'Acomptes' || title == 'Paiements')
-                      _buildAcomptesSection(
-                          items.cast<AcompteWithClientAndVetement>()),
-                  ],
-                ),
+              StreamBuilder<TaskCount>(
+                stream: _getSectionTaskCount(title),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) return const SizedBox.shrink();
+                  final count = snapshot.data!;
+
+                  if (count.total == 0) {
+                    return const Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green,
+                      size: 24,
+                    );
+                  }
+
+                  return Text(
+                    '${count.completed}/${count.total}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: count.completed == count.total
+                              ? Colors.green
+                              : AppTheme.textDark,
+                        ),
+                  );
+                },
+              ),
             ],
-          );
-        },
+          ),
+          const SizedBox(height: 16),
+          _buildSectionContent(title, []),
+        ],
       ),
     );
   }
 
-  Stream<List<dynamic>> _getDataForSection(String title) {
-    print('Getting data for section: $title');
+  Widget _buildSectionContent(String title, List<dynamic> items) {
     switch (title) {
       case 'Rendez-vous':
-        return _getRendezVousDuJour().map((data) {
-          print('Rendez-vous data: ${data.length} items');
-          return data;
-        });
+        return RendezVousSection(database: widget.database);
       case 'Cautions à rendre':
-        return _getCautionsARendre();
+        return CautionsSection(
+          database: widget.database,
+          status: CautionStatus.AR,
+        );
       case 'Cautions à recevoir':
-        return _getCautionsARecevoir();
+        return CautionsSection(
+          database: widget.database,
+          status: CautionStatus.EA,
+        );
       case 'Retours':
-        return _getRetoursAujourdhui();
+        return RetoursSection(
+          database: widget.database,
+          isRetour: true,
+        );
       case 'Départs':
-        return _getDepartsAujourdhui();
+        return RetoursSection(
+          database: widget.database,
+          isRetour: false,
+        );
       case 'Acomptes':
-        return _getAcomptesAttendus();
+        return AcomptesSection(
+          database: widget.database,
+          isPaiementComplet: false,
+        );
       case 'Paiements':
-        return _getPaiementsAttendus();
+        return AcomptesSection(
+          database: widget.database,
+          isPaiementComplet: true,
+        );
       default:
-        return Stream.value([]);
+        return const SizedBox.shrink();
     }
   }
 
-  Stream<List<RendezVousWithClient>> _getRendezVousDuJour() {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-    return (widget.database.select(widget.database.rendezVous)
-          ..where((r) => r.date.isBetweenValues(startOfDay, endOfDay))
-          ..orderBy([(r) => OrderingTerm(expression: r.heure)]))
-        .join([
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.rendezVous.idClient),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final rdv = row.readTable(widget.database.rendezVous);
-              final client = row.readTable(widget.database.clients);
-              return RendezVousWithClient(
-                id: rdv.id,
-                date: rdv.date,
-                heure: rdv.heure,
-                duree: rdv.duree,
-                motif: rdv.motif,
-                client: client,
-              );
-            }).toList());
+  Stream<TaskCount> _getSectionTaskCount(String title) {
+    switch (title) {
+      case 'Rendez-vous':
+        return widget.database.rendezVous
+            .select()
+            .watch()
+            .map((items) => TaskCount(0, items.length));
+      case 'Cautions à rendre':
+        return widget.database.cautions.select().watch().map((items) {
+          final total = items.where((c) => c.statut == 'AR').length;
+          return TaskCount(0, total);
+        });
+      // Autres cas similaires...
+      default:
+        return Stream.value(const TaskCount(0, 0));
+    }
   }
 
-  Stream<List<CautionWithClientAndReservation>> _getCautionsARendre() {
-    return (widget.database.select(widget.database.cautions)
-          ..where((c) => c.statut.equals(CautionStatus.AR.toString())))
-        .join([
-          innerJoin(
-            widget.database.reservations,
-            widget.database.reservations.id
-                .equalsExp(widget.database.cautions.idReservation),
-          ),
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final caution = row.readTable(widget.database.cautions);
-              final client = row.readTable(widget.database.clients);
-              return CautionWithClientAndReservation(
-                id: caution.id,
-                montant: caution.montant,
-                dateReception: caution.dateReception,
-                client: client,
-                idReservation: caution.idReservation,
-              );
-            }).toList());
-  }
-
-  Stream<List<CautionWithClientAndReservation>> _getCautionsARecevoir() {
-    return (widget.database.select(widget.database.cautions)
-          ..where((c) => c.statut.equals(CautionStatus.EA.toString())))
-        .join([
-          innerJoin(
-            widget.database.reservations,
-            widget.database.reservations.id
-                .equalsExp(widget.database.cautions.idReservation),
-          ),
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final caution = row.readTable(widget.database.cautions);
-              final client = row.readTable(widget.database.clients);
-              return CautionWithClientAndReservation(
-                id: caution.id,
-                montant: caution.montant,
-                dateReception: caution.dateReception,
-                client: client,
-                idReservation: caution.idReservation,
-              );
-            }).toList());
-  }
-
-  Stream<List<RetourWithClientAndVetement>> _getRetoursAujourdhui() {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return (widget.database.select(widget.database.reservations)
-          ..where((r) => r.dateRetour.isBetweenValues(startOfDay, endOfDay)))
-        .join([
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-          innerJoin(
-            widget.database.vetements,
-            widget.database.vetements.id
-                .equalsExp(widget.database.reservations.idVetement),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final reservation = row.readTable(widget.database.reservations);
-              final client = row.readTable(widget.database.clients);
-              final vetement = row.readTable(widget.database.vetements);
-              return RetourWithClientAndVetement(
-                id: reservation.id,
-                dateRetour: reservation.dateRetour!,
-                client: client,
-                vetement: vetement,
-              );
-            }).toList());
-  }
-
-  Stream<List<RetourWithClientAndVetement>> _getDepartsAujourdhui() {
-    final today = DateTime.now();
-    final startOfDay = DateTime(today.year, today.month, today.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
-
-    return (widget.database.select(widget.database.reservations)
-          ..where((r) => r.dateSortie.isBetweenValues(startOfDay, endOfDay)))
-        .join([
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-          innerJoin(
-            widget.database.vetements,
-            widget.database.vetements.id
-                .equalsExp(widget.database.reservations.idVetement),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final reservation = row.readTable(widget.database.reservations);
-              final client = row.readTable(widget.database.clients);
-              final vetement = row.readTable(widget.database.vetements);
-              return RetourWithClientAndVetement(
-                id: reservation.id,
-                dateRetour: reservation.dateSortie,
-                client: client,
-                vetement: vetement,
-              );
-            }).toList());
-  }
-
-  Stream<List<AcompteWithClientAndVetement>> _getAcomptesAttendus() {
-    return (widget.database.select(widget.database.acomptes)
-          ..where((a) => a.paye.equals(0)))
-        .join([
-          innerJoin(
-            widget.database.reservations,
-            widget.database.reservations.id
-                .equalsExp(widget.database.acomptes.idReservation),
-          ),
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-          innerJoin(
-            widget.database.vetements,
-            widget.database.vetements.id
-                .equalsExp(widget.database.reservations.idVetement),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows.map((row) {
-              final acompte = row.readTable(widget.database.acomptes);
-              final client = row.readTable(widget.database.clients);
-              final vetement = row.readTable(widget.database.vetements);
-              return AcompteWithClientAndVetement(
-                id: acompte.id,
-                montant: acompte.montant,
-                datePaiement: acompte.datePaiement,
-                client: client,
-                vetement: vetement,
-                paye: acompte.paye,
-              );
-            }).toList());
-  }
-
-  Stream<List<AcompteWithClientAndVetement>> _getPaiementsAttendus() {
-    return (widget.database.select(widget.database.acomptes)
-          ..where((a) => a.paye.equals(0)))
-        .join([
-          innerJoin(
-            widget.database.reservations,
-            widget.database.reservations.id
-                .equalsExp(widget.database.acomptes.idReservation),
-          ),
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-          innerJoin(
-            widget.database.vetements,
-            widget.database.vetements.id
-                .equalsExp(widget.database.reservations.idVetement),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows
-            .map((row) {
-              final acompte = row.readTable(widget.database.acomptes);
-              final client = row.readTable(widget.database.clients);
-              final vetement = row.readTable(widget.database.vetements);
-              if (acompte.montant == vetement.prix) {
-                return AcompteWithClientAndVetement(
-                  id: acompte.id,
-                  montant: acompte.montant,
-                  datePaiement: acompte.datePaiement,
-                  client: client,
-                  vetement: vetement,
-                  paye: acompte.paye,
-                );
-              }
-            })
-            .whereType<AcompteWithClientAndVetement>()
-            .toList());
-  }
-
-  Widget _buildRendezVousSection(List<RendezVousWithClient> rendezVous) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: rendezVous.map((rdv) {
-        String motifLabel;
-        switch (rdv.motif) {
-          case MotifRendezVous.motif:
-            motifLabel = 'Motif';
-            break;
-          case MotifRendezVous.essayage:
-            motifLabel = 'Essayage';
-            break;
-          case MotifRendezVous.consultation:
-            motifLabel = 'Consultation';
-            break;
-          case MotifRendezVous.retour:
-            motifLabel = 'Retour';
-            break;
-        }
-
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text('${rdv.client.prenom} ${rdv.client.nom}'),
-            subtitle: Text('$motifLabel à ${rdv.heure}'),
-            trailing: Text('${rdv.duree.inMinutes} min'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => RendezVousFormView(
-                    database: widget.database,
-                    rendezVous: RendezVousData(
-                      id: rdv.id,
-                      date: rdv.date,
-                      heure: rdv.heure,
-                      duree: rdv.duree,
-                      motif: rdv.motif,
-                      idClient: rdv.client.id,
-                    ),
-                    readOnly: true,
-                  ),
-                ),
-              );
-            },
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildCautionsSection(List<CautionWithClientAndReservation> cautions) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: cautions.map((caution) {
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text('${caution.client.prenom} ${caution.client.nom}'),
-            subtitle: Text('Tél: ${caution.client.numero}'),
-            trailing: Text('${caution.montant.toStringAsFixed(2)} €'),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildRetoursSection(List<RetourWithClientAndVetement> retours) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: retours.map((retour) {
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(retour.vetement.nom),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Client: ${retour.client.prenom} ${retour.client.nom}'),
-                Text('Tél: ${retour.client.numero}'),
-              ],
-            ),
-            isThreeLine: true,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildAcomptesSection(List<AcompteWithClientAndVetement> acomptes) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: acomptes.map((acompte) {
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          child: ListTile(
-            title: Text(acompte.vetement.nom),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Client: ${acompte.client.prenom} ${acompte.client.nom}'),
-                Text('Tél: ${acompte.client.numero}'),
-              ],
-            ),
-            trailing: Text('${acompte.montant.toStringAsFixed(2)} €'),
-            isThreeLine: true,
-          ),
-        );
-      }).toList(),
-    );
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 }
 
@@ -582,4 +265,11 @@ class AcompteWithClientAndVetement {
     required this.vetement,
     required this.paye,
   });
+}
+
+class TaskCount {
+  final int completed;
+  final int total;
+
+  const TaskCount(this.completed, this.total);
 }

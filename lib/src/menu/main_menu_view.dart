@@ -1,13 +1,15 @@
 import 'package:cassiopee_couture_app/database/database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../vetements/vetements_grid_view.dart';
 import 'gestion/gestion_tasks_view.dart';
-import 'clients/clients_search_view.dart';
+import 'gestion/components/clients/clients_search_view.dart';
 import 'vetements/vetement_form_view.dart';
 import 'vetements/vetement_stats_view.dart';
 import 'calendar/calendar_view.dart';
 import 'gestion/rendez_vous_form_view.dart';
+import 'debug/database_view.dart';
 
 class MainMenuView extends StatelessWidget {
   final AppDatabase database;
@@ -110,6 +112,20 @@ class MainMenuView extends StatelessWidget {
                 ),
               ],
             ),
+            if (kDebugMode)
+              _buildMenuButton(
+                context,
+                'Base de données',
+                Icons.storage,
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DatabaseView(database: database),
+                    ),
+                  );
+                },
+              ),
           ],
         ),
       ),

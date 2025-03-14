@@ -24,11 +24,10 @@ void main() async {
     final database = AppDatabase();
     final seeder = DatabaseSeeder(database);
 
-    // Supprimer l'ancienne base de données
-    print('Suppression de l\'ancienne base de données...');
+    // Supprimer complètement la base de données
     await seeder.deleteDatabase();
 
-    print('Début de la création de la base de données...');
+    // Recréer et initialiser la base de données
     await seeder.seedDatabase();
     await seeder.seedTodayTasks();
     print('Base de données créée avec succès');

@@ -44,6 +44,19 @@ class AppDatabase extends _$AppDatabase {
           }
         },
       );
+
+  Future<void> clearDatabase() async {
+    await transaction(() async {
+      // Supprimer dans l'ordre inverse des dépendances
+      await delete(rendezVous).go();
+      await delete(acomptes).go();
+      await delete(cautions).go();
+      await delete(reservations).go();
+      await delete(photos).go();
+      await delete(vetements).go();
+      await delete(clients).go();
+    });
+  }
 }
 
 LazyDatabase _openConnection() {

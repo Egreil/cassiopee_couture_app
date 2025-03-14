@@ -31,10 +31,11 @@ class Reservations extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get idVetement => integer().references(Vetements, #id)();
   IntColumn get idClient => integer().references(Clients, #id)();
-  DateTimeColumn get dateEntree => dateTime()();
-  DateTimeColumn get dateReservation => dateTime()();
-  DateTimeColumn get dateSortie => dateTime()();
-  DateTimeColumn get dateRetour => dateTime().nullable()();
+  DateTimeColumn get dateReservation =>
+      dateTime()(); // date de création de la réservation
+  DateTimeColumn get dateSortie => dateTime()(); // date de sortie du vetement
+  DateTimeColumn get dateRetour =>
+      dateTime().nullable()(); //date de retour du vetement
 }
 
 class Cautions extends Table {
