@@ -33,9 +33,32 @@ class _DatabaseViewState extends State<DatabaseView>
       setState(() {});
     });
 
-    // Écouter les changements pour chaque table
-    widget.database.select(widget.database.rendezVous).watch().listen((_) {
-      if (mounted && _tabController.index == 0) setState(() {});
+    // Modifier le listener des rendez-vous avec un tri explicite
+    (widget.database.select(widget.database.rendezVous)
+          ..orderBy([
+            (t) => OrderingTerm(
+                  expression: t.date,
+                  mode: OrderingMode.asc,
+                ),
+            (t) => OrderingTerm(
+                  expression: t.heure,
+                  mode: OrderingMode.asc,
+                ),
+          ]))
+        .watch()
+        .listen((rdvs) {
+      print("Listener RDV déclenché: ${rdvs.length} rendez-vous");
+      for (var rdv in rdvs) {
+        print(
+            '  -> RDV ${rdv.id}: Client=${rdv.idClient}, Date=${rdv.date}, Heure=${rdv.heure}');
+      }
+      if (mounted && _tabController.index == 0) {
+        print("setState appelé pour RDV");
+        setState(() {});
+      } else {
+        print(
+            "setState non appelé: mounted=$mounted, index=${_tabController.index}");
+      }
     });
 
     widget.database.select(widget.database.clients).watch().listen((_) {
@@ -390,52 +413,59 @@ class _RendezVousTab extends StatefulWidget {
 
 class _RendezVousTabState extends State<_RendezVousTab>
     with AutomaticKeepAliveClientMixin {
+  late Future<List<RendezVousData>> _rdvsFuture;
+
   @override
-  bool get wantKeepAlive => false; // Force la reconstruction
+  void initState() {
+    super.initState();
+    _refreshData();
+  }
+
+  Future<void> _refreshData() async {
+    setState(() {
+      _rdvsFuture = widget.database.select(widget.database.rendezVous).get();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    print('Construction du widget RendezVous');
-    return StreamBuilder<List<RendezVousData>>(
-      stream: widget.database.select(widget.database.rendezVous).watch(),
-      builder: (context, snapshot) {
-        print('État du StreamBuilder: ${snapshot.connectionState}');
-        if (snapshot.hasError) {
-          print('Erreur: ${snapshot.error}');
-          return Center(child: Text('Erreur: ${snapshot.error}'));
-        }
+    return RefreshIndicator(
+      onRefresh: _refreshData,
+      child: FutureBuilder<List<RendezVousData>>(
+        future: _rdvsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          if (snapshot.hasError) {
+            return Center(child: Text('Erreur: ${snapshot.error}'));
+          }
 
-        final rendezVous = snapshot.data ?? [];
-        print('Affichage final de ${rendezVous.length} rendez-vous');
+          final rdvs = snapshot.data!;
+          print('Affichage de ${rdvs.length} rendez-vous:');
+          for (var rdv in rdvs) {
+            print(
+                'RDV ${rdv.id}: Client=${rdv.idClient}, Date=${rdv.date}, Heure=${rdv.heure}');
+          }
 
-        return ListView.builder(
-          itemCount: rendezVous.length,
-          itemBuilder: (context, index) {
-            final rdv = rendezVous[index];
-            return Card(
-              child: ListTile(
-                title: Text('RDV #${rdv.id}'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Client ID: ${rdv.idClient}'),
-                    Text('Date: ${rdv.date}'),
-                    Text('Heure: ${rdv.heure}'),
-                    Text('Durée: ${rdv.duree.inMinutes} min'),
-                    Text('Motif: ${rdv.motif}'),
-                  ],
-                ),
-                isThreeLine: true,
-              ),
-            );
-          },
-        );
-      },
+          return ListView.builder(
+            itemCount: rdvs.length,
+            itemBuilder: (context, index) {
+              final rdv = rdvs[index];
+              return ListTile(
+                title: Text('RDV ${rdv.id}'),
+                subtitle: Text(
+                    'Client: ${rdv.idClient}, Date: ${rdv.date}, Heure: ${rdv.heure}'),
+              );
+            },
+          );
+        },
+      ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
