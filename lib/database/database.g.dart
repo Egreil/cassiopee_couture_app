@@ -2391,6 +2391,230 @@ class RendezVousCompanion extends UpdateCompanion<RendezVousData> {
   }
 }
 
+class $FavorisTable extends Favoris with TableInfo<$FavorisTable, Favori> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FavorisTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idClientMeta =
+      const VerificationMeta('idClient');
+  @override
+  late final GeneratedColumn<int> idClient = GeneratedColumn<int>(
+      'id_client', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES clients (id)'));
+  static const VerificationMeta _idVetementMeta =
+      const VerificationMeta('idVetement');
+  @override
+  late final GeneratedColumn<int> idVetement = GeneratedColumn<int>(
+      'id_vetement', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES vetements (id)'));
+  @override
+  List<GeneratedColumn> get $columns => [id, idClient, idVetement];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'favoris';
+  @override
+  VerificationContext validateIntegrity(Insertable<Favori> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('id_client')) {
+      context.handle(_idClientMeta,
+          idClient.isAcceptableOrUnknown(data['id_client']!, _idClientMeta));
+    } else if (isInserting) {
+      context.missing(_idClientMeta);
+    }
+    if (data.containsKey('id_vetement')) {
+      context.handle(
+          _idVetementMeta,
+          idVetement.isAcceptableOrUnknown(
+              data['id_vetement']!, _idVetementMeta));
+    } else if (isInserting) {
+      context.missing(_idVetementMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Favori map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Favori(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      idClient: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_client'])!,
+      idVetement: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_vetement'])!,
+    );
+  }
+
+  @override
+  $FavorisTable createAlias(String alias) {
+    return $FavorisTable(attachedDatabase, alias);
+  }
+}
+
+class Favori extends DataClass implements Insertable<Favori> {
+  final int id;
+  final int idClient;
+  final int idVetement;
+  const Favori(
+      {required this.id, required this.idClient, required this.idVetement});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['id_client'] = Variable<int>(idClient);
+    map['id_vetement'] = Variable<int>(idVetement);
+    return map;
+  }
+
+  FavorisCompanion toCompanion(bool nullToAbsent) {
+    return FavorisCompanion(
+      id: Value(id),
+      idClient: Value(idClient),
+      idVetement: Value(idVetement),
+    );
+  }
+
+  factory Favori.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Favori(
+      id: serializer.fromJson<int>(json['id']),
+      idClient: serializer.fromJson<int>(json['idClient']),
+      idVetement: serializer.fromJson<int>(json['idVetement']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'idClient': serializer.toJson<int>(idClient),
+      'idVetement': serializer.toJson<int>(idVetement),
+    };
+  }
+
+  Favori copyWith({int? id, int? idClient, int? idVetement}) => Favori(
+        id: id ?? this.id,
+        idClient: idClient ?? this.idClient,
+        idVetement: idVetement ?? this.idVetement,
+      );
+  Favori copyWithCompanion(FavorisCompanion data) {
+    return Favori(
+      id: data.id.present ? data.id.value : this.id,
+      idClient: data.idClient.present ? data.idClient.value : this.idClient,
+      idVetement:
+          data.idVetement.present ? data.idVetement.value : this.idVetement,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Favori(')
+          ..write('id: $id, ')
+          ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, idClient, idVetement);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Favori &&
+          other.id == this.id &&
+          other.idClient == this.idClient &&
+          other.idVetement == this.idVetement);
+}
+
+class FavorisCompanion extends UpdateCompanion<Favori> {
+  final Value<int> id;
+  final Value<int> idClient;
+  final Value<int> idVetement;
+  const FavorisCompanion({
+    this.id = const Value.absent(),
+    this.idClient = const Value.absent(),
+    this.idVetement = const Value.absent(),
+  });
+  FavorisCompanion.insert({
+    this.id = const Value.absent(),
+    required int idClient,
+    required int idVetement,
+  })  : idClient = Value(idClient),
+        idVetement = Value(idVetement);
+  static Insertable<Favori> custom({
+    Expression<int>? id,
+    Expression<int>? idClient,
+    Expression<int>? idVetement,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (idClient != null) 'id_client': idClient,
+      if (idVetement != null) 'id_vetement': idVetement,
+    });
+  }
+
+  FavorisCompanion copyWith(
+      {Value<int>? id, Value<int>? idClient, Value<int>? idVetement}) {
+    return FavorisCompanion(
+      id: id ?? this.id,
+      idClient: idClient ?? this.idClient,
+      idVetement: idVetement ?? this.idVetement,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (idClient.present) {
+      map['id_client'] = Variable<int>(idClient.value);
+    }
+    if (idVetement.present) {
+      map['id_vetement'] = Variable<int>(idVetement.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavorisCompanion(')
+          ..write('id: $id, ')
+          ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2401,6 +2625,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CautionsTable cautions = $CautionsTable(this);
   late final $AcomptesTable acomptes = $AcomptesTable(this);
   late final $RendezVousTable rendezVous = $RendezVousTable(this);
+  late final $FavorisTable favoris = $FavorisTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2412,7 +2637,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         reservations,
         cautions,
         acomptes,
-        rendezVous
+        rendezVous,
+        favoris
       ];
 }
 
@@ -2469,6 +2695,21 @@ final class $$VetementsTableReferences
         .filter((f) => f.idVetement.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_reservationsRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+
+  static MultiTypedResultKey<$FavorisTable, List<Favori>> _favorisRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.favoris,
+          aliasName:
+              $_aliasNameGenerator(db.vetements.id, db.favoris.idVetement));
+
+  $$FavorisTableProcessedTableManager get favorisRefs {
+    final manager = $$FavorisTableTableManager($_db, $_db.favoris)
+        .filter((f) => f.idVetement.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_favorisRefsTable($_db));
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
@@ -2545,6 +2786,27 @@ class $$VetementsTableFilterComposer
             $$ReservationsTableFilterComposer(
               $db: $db,
               $table: $db.reservations,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> favorisRefs(
+      Expression<bool> Function($$FavorisTableFilterComposer f) f) {
+    final $$FavorisTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idVetement,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableFilterComposer(
+              $db: $db,
+              $table: $db.favoris,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -2670,6 +2932,27 @@ class $$VetementsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> favorisRefs<T extends Object>(
+      Expression<T> Function($$FavorisTableAnnotationComposer a) f) {
+    final $$FavorisTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idVetement,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableAnnotationComposer(
+              $db: $db,
+              $table: $db.favoris,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$VetementsTableTableManager extends RootTableManager<
@@ -2683,7 +2966,8 @@ class $$VetementsTableTableManager extends RootTableManager<
     $$VetementsTableUpdateCompanionBuilder,
     (Vetement, $$VetementsTableReferences),
     Vetement,
-    PrefetchHooks Function({bool photosRefs, bool reservationsRefs})> {
+    PrefetchHooks Function(
+        {bool photosRefs, bool reservationsRefs, bool favorisRefs})> {
   $$VetementsTableTableManager(_$AppDatabase db, $VetementsTable table)
       : super(TableManagerState(
           db: db,
@@ -2745,12 +3029,15 @@ class $$VetementsTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {photosRefs = false, reservationsRefs = false}) {
+              {photosRefs = false,
+              reservationsRefs = false,
+              favorisRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (photosRefs) db.photos,
-                if (reservationsRefs) db.reservations
+                if (reservationsRefs) db.reservations,
+                if (favorisRefs) db.favoris
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -2778,6 +3065,18 @@ class $$VetementsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.idVetement == item.id),
+                        typedResults: items),
+                  if (favorisRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$VetementsTableReferences._favorisRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$VetementsTableReferences(db, table, p0)
+                                .favorisRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.idVetement == item.id),
                         typedResults: items)
                 ];
               },
@@ -2797,7 +3096,8 @@ typedef $$VetementsTableProcessedTableManager = ProcessedTableManager<
     $$VetementsTableUpdateCompanionBuilder,
     (Vetement, $$VetementsTableReferences),
     Vetement,
-    PrefetchHooks Function({bool photosRefs, bool reservationsRefs})>;
+    PrefetchHooks Function(
+        {bool photosRefs, bool reservationsRefs, bool favorisRefs})>;
 typedef $$PhotosTableCreateCompanionBuilder = PhotosCompanion Function({
   Value<int> id,
   required int idVetement,
@@ -3082,6 +3382,20 @@ final class $$ClientsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$FavorisTable, List<Favori>> _favorisRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.favoris,
+          aliasName: $_aliasNameGenerator(db.clients.id, db.favoris.idClient));
+
+  $$FavorisTableProcessedTableManager get favorisRefs {
+    final manager = $$FavorisTableTableManager($_db, $_db.favoris)
+        .filter((f) => f.idClient.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_favorisRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$ClientsTableFilterComposer
@@ -3145,6 +3459,27 @@ class $$ClientsTableFilterComposer
             $$RendezVousTableFilterComposer(
               $db: $db,
               $table: $db.rendezVous,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> favorisRefs(
+      Expression<bool> Function($$FavorisTableFilterComposer f) f) {
+    final $$FavorisTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idClient,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableFilterComposer(
+              $db: $db,
+              $table: $db.favoris,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -3250,6 +3585,27 @@ class $$ClientsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> favorisRefs<T extends Object>(
+      Expression<T> Function($$FavorisTableAnnotationComposer a) f) {
+    final $$FavorisTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idClient,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableAnnotationComposer(
+              $db: $db,
+              $table: $db.favoris,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$ClientsTableTableManager extends RootTableManager<
@@ -3263,7 +3619,8 @@ class $$ClientsTableTableManager extends RootTableManager<
     $$ClientsTableUpdateCompanionBuilder,
     (Client, $$ClientsTableReferences),
     Client,
-    PrefetchHooks Function({bool reservationsRefs, bool rendezVousRefs})> {
+    PrefetchHooks Function(
+        {bool reservationsRefs, bool rendezVousRefs, bool favorisRefs})> {
   $$ClientsTableTableManager(_$AppDatabase db, $ClientsTable table)
       : super(TableManagerState(
           db: db,
@@ -3311,12 +3668,15 @@ class $$ClientsTableTableManager extends RootTableManager<
                   (e.readTable(table), $$ClientsTableReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {reservationsRefs = false, rendezVousRefs = false}) {
+              {reservationsRefs = false,
+              rendezVousRefs = false,
+              favorisRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (reservationsRefs) db.reservations,
-                if (rendezVousRefs) db.rendezVous
+                if (rendezVousRefs) db.rendezVous,
+                if (favorisRefs) db.favoris
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -3344,6 +3704,17 @@ class $$ClientsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.idClient == item.id),
+                        typedResults: items),
+                  if (favorisRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$ClientsTableReferences._favorisRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ClientsTableReferences(db, table, p0).favorisRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.idClient == item.id),
                         typedResults: items)
                 ];
               },
@@ -3363,7 +3734,8 @@ typedef $$ClientsTableProcessedTableManager = ProcessedTableManager<
     $$ClientsTableUpdateCompanionBuilder,
     (Client, $$ClientsTableReferences),
     Client,
-    PrefetchHooks Function({bool reservationsRefs, bool rendezVousRefs})>;
+    PrefetchHooks Function(
+        {bool reservationsRefs, bool rendezVousRefs, bool favorisRefs})>;
 typedef $$ReservationsTableCreateCompanionBuilder = ReservationsCompanion
     Function({
   Value<int> id,
@@ -4714,6 +5086,316 @@ typedef $$RendezVousTableProcessedTableManager = ProcessedTableManager<
     (RendezVousData, $$RendezVousTableReferences),
     RendezVousData,
     PrefetchHooks Function({bool idClient})>;
+typedef $$FavorisTableCreateCompanionBuilder = FavorisCompanion Function({
+  Value<int> id,
+  required int idClient,
+  required int idVetement,
+});
+typedef $$FavorisTableUpdateCompanionBuilder = FavorisCompanion Function({
+  Value<int> id,
+  Value<int> idClient,
+  Value<int> idVetement,
+});
+
+final class $$FavorisTableReferences
+    extends BaseReferences<_$AppDatabase, $FavorisTable, Favori> {
+  $$FavorisTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ClientsTable _idClientTable(_$AppDatabase db) => db.clients
+      .createAlias($_aliasNameGenerator(db.favoris.idClient, db.clients.id));
+
+  $$ClientsTableProcessedTableManager get idClient {
+    final $_column = $_itemColumn<int>('id_client')!;
+
+    final manager = $$ClientsTableTableManager($_db, $_db.clients)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_idClientTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $VetementsTable _idVetementTable(_$AppDatabase db) =>
+      db.vetements.createAlias(
+          $_aliasNameGenerator(db.favoris.idVetement, db.vetements.id));
+
+  $$VetementsTableProcessedTableManager get idVetement {
+    final $_column = $_itemColumn<int>('id_vetement')!;
+
+    final manager = $$VetementsTableTableManager($_db, $_db.vetements)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_idVetementTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$FavorisTableFilterComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  $$ClientsTableFilterComposer get idClient {
+    final $$ClientsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableFilterComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableFilterComposer get idVetement {
+    final $$VetementsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableFilterComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableOrderingComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  $$ClientsTableOrderingComposer get idClient {
+    final $$ClientsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableOrderingComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableOrderingComposer get idVetement {
+    final $$VetementsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableOrderingComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  $$ClientsTableAnnotationComposer get idClient {
+    final $$ClientsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableAnnotationComposer get idVetement {
+    final $$VetementsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $FavorisTable,
+    Favori,
+    $$FavorisTableFilterComposer,
+    $$FavorisTableOrderingComposer,
+    $$FavorisTableAnnotationComposer,
+    $$FavorisTableCreateCompanionBuilder,
+    $$FavorisTableUpdateCompanionBuilder,
+    (Favori, $$FavorisTableReferences),
+    Favori,
+    PrefetchHooks Function({bool idClient, bool idVetement})> {
+  $$FavorisTableTableManager(_$AppDatabase db, $FavorisTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FavorisTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FavorisTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FavorisTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> idClient = const Value.absent(),
+            Value<int> idVetement = const Value.absent(),
+          }) =>
+              FavorisCompanion(
+            id: id,
+            idClient: idClient,
+            idVetement: idVetement,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int idClient,
+            required int idVetement,
+          }) =>
+              FavorisCompanion.insert(
+            id: id,
+            idClient: idClient,
+            idVetement: idVetement,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$FavorisTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({idClient = false, idVetement = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (idClient) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idClient,
+                    referencedTable:
+                        $$FavorisTableReferences._idClientTable(db),
+                    referencedColumn:
+                        $$FavorisTableReferences._idClientTable(db).id,
+                  ) as T;
+                }
+                if (idVetement) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idVetement,
+                    referencedTable:
+                        $$FavorisTableReferences._idVetementTable(db),
+                    referencedColumn:
+                        $$FavorisTableReferences._idVetementTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$FavorisTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $FavorisTable,
+    Favori,
+    $$FavorisTableFilterComposer,
+    $$FavorisTableOrderingComposer,
+    $$FavorisTableAnnotationComposer,
+    $$FavorisTableCreateCompanionBuilder,
+    $$FavorisTableUpdateCompanionBuilder,
+    (Favori, $$FavorisTableReferences),
+    Favori,
+    PrefetchHooks Function({bool idClient, bool idVetement})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4732,4 +5414,6 @@ class $AppDatabaseManager {
       $$AcomptesTableTableManager(_db, _db.acomptes);
   $$RendezVousTableTableManager get rendezVous =>
       $$RendezVousTableTableManager(_db, _db.rendezVous);
+  $$FavorisTableTableManager get favoris =>
+      $$FavorisTableTableManager(_db, _db.favoris);
 }

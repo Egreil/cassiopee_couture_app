@@ -74,6 +74,17 @@ class RendezVous extends Table {
   TextColumn get motif => textEnum<MotifRendezVous>()();
 }
 
+class Favoris extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get idClient => integer().references(Clients, #id)();
+  IntColumn get idVetement => integer().references(Vetements, #id)();
+
+  @override
+  List<String> get customConstraints => [
+        'UNIQUE (id_client, id_vetement)',
+      ];
+}
+
 // Enum pour le statut des cautions
 enum CautionStatus {
   EA, // En attente
