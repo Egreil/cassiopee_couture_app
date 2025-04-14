@@ -1,14 +1,24 @@
 import 'package:cassiopee_couture_app/src/theme/app_theme.dart';
 import 'package:drift/drift.dart'
-    show BooleanExpressionOperators, ComparableExpr, Constant, Expression;
+    show
+        BooleanExpressionOperators,
+        ComparableExpr,
+        Constant,
+        Expression,
+        OrderingTerm;
 import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import 'vetement_details_screen.dart';
 
 class VetementsGridView extends StatefulWidget {
   final AppDatabase database;
+  final Client? initialClient;
 
-  const VetementsGridView({super.key, required this.database});
+  const VetementsGridView({
+    super.key,
+    required this.database,
+    this.initialClient,
+  });
 
   @override
   State<VetementsGridView> createState() => _VetementsGridViewState();
@@ -22,13 +32,43 @@ class _VetementsGridViewState extends State<VetementsGridView> {
   double? maxTaille;
   double? minPoitrine;
   double? maxPoitrine;
+  Client? selectedClient;
+  bool _showOnlyFavorites = false;
+  List<int> _favoris = [];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedClient = widget.initialClient;
+    _loadFavoris();
+  }
+
+  Future<void> _loadFavoris() async {
+    if (selectedClient != null) {
+      final favoris = await (widget.database.select(widget.database.favoris)
+            ..where((f) => f.idClient.equals(selectedClient!.id)))
+          .get();
+      setState(() {
+        _favoris = favoris.map((f) => f.idVetement).toList();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.blancCasse,
       appBar: AppBar(
-        title: const Text('Vêtements'),
+        title: const Text('Catalogue'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: selectedClient == null
+                ? 'Sélectionner un client'
+                : '${selectedClient!.prenom} ${selectedClient!.nom}',
+            onPressed: _showClientSelector,
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: _buildFilterBar(),
@@ -72,6 +112,19 @@ class _VetementsGridViewState extends State<VetementsGridView> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
+          if (selectedClient != null)
+            IconButton(
+              icon: Icon(
+                Icons.favorite,
+                color: _showOnlyFavorites ? Colors.red : Colors.grey,
+              ),
+              onPressed: () {
+                setState(() {
+                  _showOnlyFavorites = !_showOnlyFavorites;
+                });
+              },
+              tooltip: 'Afficher uniquement les favoris',
+            ),
           // Filtre par catégorie
           Expanded(
             child: DropdownButton<String>(
@@ -223,71 +276,104 @@ class _VetementsGridViewState extends State<VetementsGridView> {
       BuildContext context, Vetement vetement, List<Photo> photos) {
     return Card(
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => VetementDetailsScreen(
-                database: widget.database,
-                vetementId: vetement.id,
-              ),
-            ),
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: photos.isNotEmpty
-                  ? Image.network(
-                      photos.first.url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => VetementDetailsScreen(
+                    database: widget.database,
+                    vetementId: vetement.id,
+                    client: selectedClient,
+                  ),
+                ),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: photos.isNotEmpty
+                      ? Image.network(
+                          photos.first.url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: AppTheme.blancCasse,
+                              child: Icon(Icons.image_not_supported,
+                                  color: AppTheme.textLight),
+                            );
+                          },
+                        )
+                      : Container(
                           color: AppTheme.blancCasse,
                           child: Icon(Icons.image_not_supported,
                               color: AppTheme.textLight),
-                        );
-                      },
-                    )
-                  : Container(
-                      color: AppTheme.blancCasse,
-                      child: Icon(Icons.image_not_supported,
-                          color: AppTheme.textLight),
-                    ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    vetement.nom,
-                    style: Theme.of(context).textTheme.titleMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    '${vetement.prix}€',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppTheme.terracotta,
-                          fontWeight: FontWeight.bold,
                         ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        vetement.nom,
+                        style: Theme.of(context).textTheme.titleMedium,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${vetement.prix}€',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: AppTheme.terracotta,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          if (selectedClient != null)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: FavoriButton(
+                vetementId: vetement.id,
+                clientId: selectedClient!.id,
+                database: widget.database,
+                initialFavori: _favoris.contains(vetement.id),
+                onToggle: (bool isFavori) =>
+                    _toggleFavoriLocally(vetement.id, isFavori),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
+  }
+
+  void _toggleFavoriLocally(int vetementId, bool isFavori) {
+    setState(() {
+      if (isFavori) {
+        _favoris.add(vetementId);
+      } else {
+        _favoris.remove(vetementId);
+      }
+    });
   }
 
   Stream<List<(Vetement, List<Photo>)>> _getVetementsWithPhotos() {
     return (widget.database.select(widget.database.vetements)
           ..where((v) {
             Expression<bool> predicate = const Constant(true);
+
+            // Filtre des favoris
+            if (_showOnlyFavorites && selectedClient != null) {
+              predicate = predicate & v.id.isIn(_favoris);
+            }
 
             // Filtre par catégorie
             if (selectedCategory != null) {
@@ -348,5 +434,148 @@ class _VetementsGridViewState extends State<VetementsGridView> {
       }
       return results;
     });
+  }
+
+  Future<void> _showClientSelector() async {
+    final client = await showDialog<Client>(
+      context: context,
+      builder: (context) => ClientSelectorDialog(database: widget.database),
+    );
+
+    if (client != null) {
+      setState(() {
+        selectedClient = client;
+        _showOnlyFavorites = false;
+      });
+      await _loadFavoris();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Client sélectionné : ${client.prenom} ${client.nom}')),
+        );
+      }
+    }
+  }
+}
+
+class ClientSelectorDialog extends StatelessWidget {
+  final AppDatabase database;
+
+  const ClientSelectorDialog({super.key, required this.database});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Sélectionner un client'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: StreamBuilder<List<Client>>(
+          stream: (database.select(database.clients)
+                ..orderBy([
+                  (t) => OrderingTerm(expression: t.nom),
+                  (t) => OrderingTerm(expression: t.prenom),
+                ]))
+              .watch(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final clients = snapshot.data!;
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: clients.length,
+              itemBuilder: (context, index) {
+                final client = clients[index];
+                return ListTile(
+                  title: Text('${client.prenom} ${client.nom}'),
+                  subtitle: Text(client.numero),
+                  onTap: () => Navigator.of(context).pop(client),
+                );
+              },
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Annuler'),
+        ),
+      ],
+    );
+  }
+}
+
+// Nouveau widget pour le bouton favori
+class FavoriButton extends StatefulWidget {
+  final int vetementId;
+  final int clientId;
+  final AppDatabase database;
+  final bool initialFavori;
+  final Function(bool)? onToggle;
+
+  const FavoriButton({
+    super.key,
+    required this.vetementId,
+    required this.clientId,
+    required this.database,
+    required this.initialFavori,
+    this.onToggle,
+  });
+
+  @override
+  State<FavoriButton> createState() => _FavoriButtonState();
+}
+
+class _FavoriButtonState extends State<FavoriButton> {
+  late bool isFavori;
+
+  @override
+  void initState() {
+    super.initState();
+    isFavori = widget.initialFavori;
+  }
+
+  Future<void> _toggleFavori() async {
+    try {
+      final existingFavori =
+          await (widget.database.select(widget.database.favoris)
+                ..where((f) =>
+                    f.idClient.equals(widget.clientId) &
+                    f.idVetement.equals(widget.vetementId)))
+              .getSingleOrNull();
+
+      if (existingFavori == null) {
+        await widget.database.into(widget.database.favoris).insert(
+              FavorisCompanion.insert(
+                idClient: widget.clientId,
+                idVetement: widget.vetementId,
+              ),
+            );
+        setState(() => isFavori = true);
+        widget.onToggle?.call(true);
+      } else {
+        await (widget.database.delete(widget.database.favoris)
+              ..where((f) => f.id.equals(existingFavori.id)))
+            .go();
+        setState(() => isFavori = false);
+        widget.onToggle?.call(false);
+      }
+    } catch (e) {
+      // Gérer l'erreur si nécessaire
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        isFavori ? Icons.favorite : Icons.favorite_border,
+        color: isFavori ? Colors.red : Colors.grey,
+      ),
+      onPressed: _toggleFavori,
+    );
   }
 }

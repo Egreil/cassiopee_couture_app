@@ -8,16 +8,28 @@ class DurationConverter extends TypeConverter<Duration, int> {
   int toSql(Duration value) => value.inMinutes;
 }
 
+enum Category {
+  robe,
+  jupe,
+  haut,
+  ensemble,
+}
+
+enum TypeEvenement {
+  soiree,
+  mariage,
+}
+
 class Vetements extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get nom => text()();
   TextColumn get couleurs => text()();
-  TextColumn get category =>
-      text().withLength(min: 1, max: 20)(); // 'robe', 'jupe', 'haut'
-  RealColumn get tourTaille => real().nullable()(); // pour robe et jupe
-  RealColumn get longueurTotale => real()();
-  RealColumn get tourPoitrine => real().nullable()(); // pour robe et hauts
+  TextColumn get category => textEnum<Category>()();
+  TextColumn get evenement => textEnum<TypeEvenement>()();
   RealColumn get prix => real()();
+  RealColumn get tourTaille => real().nullable()();
+  RealColumn get tourPoitrine => real().nullable()();
+  RealColumn get longueurTotale => real()();
   TextColumn get commentaire => text().nullable()();
 }
 
@@ -72,6 +84,17 @@ class RendezVous extends Table {
   TextColumn get heure => text()();
   IntColumn get duree => integer().map(const DurationConverter())();
   TextColumn get motif => textEnum<MotifRendezVous>()();
+}
+
+class Favoris extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get idClient => integer().references(Clients, #id)();
+  IntColumn get idVetement => integer().references(Vetements, #id)();
+
+  @override
+  List<String> get customConstraints => [
+        'UNIQUE (id_client, id_vetement)',
+      ];
 }
 
 // Enum pour le statut des cautions

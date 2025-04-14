@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../database/database.dart';
+import '../../database/tables.dart';
 import '../theme/app_theme.dart';
 
 class VetementDetailsView extends StatelessWidget {
@@ -54,7 +55,12 @@ class VetementDetailsView extends StatelessWidget {
 
             // Informations générales
             _buildInfoSection('Informations générales', [
-              _buildInfoRow('Catégorie', vetement.category),
+              _buildInfoRow('Catégorie', vetement.category.name),
+              _buildInfoRow(
+                  'Événement',
+                  vetement.evenement == TypeEvenement.soiree
+                      ? 'Soirée'
+                      : 'Mariage'),
               _buildInfoRow('Couleurs', vetement.couleurs),
               _buildInfoRow('Prix', '${vetement.prix}€'),
             ]),

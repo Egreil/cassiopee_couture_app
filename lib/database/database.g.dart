@@ -32,34 +32,39 @@ class $VetementsTable extends Vetements
   static const VerificationMeta _categoryMeta =
       const VerificationMeta('category');
   @override
-  late final GeneratedColumn<String> category = GeneratedColumn<String>(
-      'category', aliasedName, false,
-      additionalChecks:
-          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 20),
-      type: DriftSqlType.string,
-      requiredDuringInsert: true);
+  late final GeneratedColumnWithTypeConverter<Category, String> category =
+      GeneratedColumn<String>('category', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<Category>($VetementsTable.$convertercategory);
+  static const VerificationMeta _evenementMeta =
+      const VerificationMeta('evenement');
+  @override
+  late final GeneratedColumnWithTypeConverter<TypeEvenement, String> evenement =
+      GeneratedColumn<String>('evenement', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<TypeEvenement>($VetementsTable.$converterevenement);
+  static const VerificationMeta _prixMeta = const VerificationMeta('prix');
+  @override
+  late final GeneratedColumn<double> prix = GeneratedColumn<double>(
+      'prix', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _tourTailleMeta =
       const VerificationMeta('tourTaille');
   @override
   late final GeneratedColumn<double> tourTaille = GeneratedColumn<double>(
       'tour_taille', aliasedName, true,
       type: DriftSqlType.double, requiredDuringInsert: false);
-  static const VerificationMeta _longueurTotaleMeta =
-      const VerificationMeta('longueurTotale');
-  @override
-  late final GeneratedColumn<double> longueurTotale = GeneratedColumn<double>(
-      'longueur_totale', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _tourPoitrineMeta =
       const VerificationMeta('tourPoitrine');
   @override
   late final GeneratedColumn<double> tourPoitrine = GeneratedColumn<double>(
       'tour_poitrine', aliasedName, true,
       type: DriftSqlType.double, requiredDuringInsert: false);
-  static const VerificationMeta _prixMeta = const VerificationMeta('prix');
+  static const VerificationMeta _longueurTotaleMeta =
+      const VerificationMeta('longueurTotale');
   @override
-  late final GeneratedColumn<double> prix = GeneratedColumn<double>(
-      'prix', aliasedName, false,
+  late final GeneratedColumn<double> longueurTotale = GeneratedColumn<double>(
+      'longueur_totale', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _commentaireMeta =
       const VerificationMeta('commentaire');
@@ -73,10 +78,11 @@ class $VetementsTable extends Vetements
         nom,
         couleurs,
         category,
-        tourTaille,
-        longueurTotale,
-        tourPoitrine,
+        evenement,
         prix,
+        tourTaille,
+        tourPoitrine,
+        longueurTotale,
         commentaire
       ];
   @override
@@ -104,17 +110,25 @@ class $VetementsTable extends Vetements
     } else if (isInserting) {
       context.missing(_couleursMeta);
     }
-    if (data.containsKey('category')) {
-      context.handle(_categoryMeta,
-          category.isAcceptableOrUnknown(data['category']!, _categoryMeta));
+    context.handle(_categoryMeta, const VerificationResult.success());
+    context.handle(_evenementMeta, const VerificationResult.success());
+    if (data.containsKey('prix')) {
+      context.handle(
+          _prixMeta, prix.isAcceptableOrUnknown(data['prix']!, _prixMeta));
     } else if (isInserting) {
-      context.missing(_categoryMeta);
+      context.missing(_prixMeta);
     }
     if (data.containsKey('tour_taille')) {
       context.handle(
           _tourTailleMeta,
           tourTaille.isAcceptableOrUnknown(
               data['tour_taille']!, _tourTailleMeta));
+    }
+    if (data.containsKey('tour_poitrine')) {
+      context.handle(
+          _tourPoitrineMeta,
+          tourPoitrine.isAcceptableOrUnknown(
+              data['tour_poitrine']!, _tourPoitrineMeta));
     }
     if (data.containsKey('longueur_totale')) {
       context.handle(
@@ -123,18 +137,6 @@ class $VetementsTable extends Vetements
               data['longueur_totale']!, _longueurTotaleMeta));
     } else if (isInserting) {
       context.missing(_longueurTotaleMeta);
-    }
-    if (data.containsKey('tour_poitrine')) {
-      context.handle(
-          _tourPoitrineMeta,
-          tourPoitrine.isAcceptableOrUnknown(
-              data['tour_poitrine']!, _tourPoitrineMeta));
-    }
-    if (data.containsKey('prix')) {
-      context.handle(
-          _prixMeta, prix.isAcceptableOrUnknown(data['prix']!, _prixMeta));
-    } else if (isInserting) {
-      context.missing(_prixMeta);
     }
     if (data.containsKey('commentaire')) {
       context.handle(
@@ -157,16 +159,20 @@ class $VetementsTable extends Vetements
           .read(DriftSqlType.string, data['${effectivePrefix}nom'])!,
       couleurs: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}couleurs'])!,
-      category: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}category'])!,
-      tourTaille: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}tour_taille']),
-      longueurTotale: attachedDatabase.typeMapping.read(
-          DriftSqlType.double, data['${effectivePrefix}longueur_totale'])!,
-      tourPoitrine: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}tour_poitrine']),
+      category: $VetementsTable.$convertercategory.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}category'])!),
+      evenement: $VetementsTable.$converterevenement.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}evenement'])!),
       prix: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}prix'])!,
+      tourTaille: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tour_taille']),
+      tourPoitrine: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}tour_poitrine']),
+      longueurTotale: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}longueur_totale'])!,
       commentaire: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}commentaire']),
     );
@@ -176,27 +182,34 @@ class $VetementsTable extends Vetements
   $VetementsTable createAlias(String alias) {
     return $VetementsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<Category, String, String> $convertercategory =
+      const EnumNameConverter<Category>(Category.values);
+  static JsonTypeConverter2<TypeEvenement, String, String> $converterevenement =
+      const EnumNameConverter<TypeEvenement>(TypeEvenement.values);
 }
 
 class Vetement extends DataClass implements Insertable<Vetement> {
   final int id;
   final String nom;
   final String couleurs;
-  final String category;
-  final double? tourTaille;
-  final double longueurTotale;
-  final double? tourPoitrine;
+  final Category category;
+  final TypeEvenement evenement;
   final double prix;
+  final double? tourTaille;
+  final double? tourPoitrine;
+  final double longueurTotale;
   final String? commentaire;
   const Vetement(
       {required this.id,
       required this.nom,
       required this.couleurs,
       required this.category,
-      this.tourTaille,
-      required this.longueurTotale,
-      this.tourPoitrine,
+      required this.evenement,
       required this.prix,
+      this.tourTaille,
+      this.tourPoitrine,
+      required this.longueurTotale,
       this.commentaire});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -204,15 +217,22 @@ class Vetement extends DataClass implements Insertable<Vetement> {
     map['id'] = Variable<int>(id);
     map['nom'] = Variable<String>(nom);
     map['couleurs'] = Variable<String>(couleurs);
-    map['category'] = Variable<String>(category);
+    {
+      map['category'] =
+          Variable<String>($VetementsTable.$convertercategory.toSql(category));
+    }
+    {
+      map['evenement'] = Variable<String>(
+          $VetementsTable.$converterevenement.toSql(evenement));
+    }
+    map['prix'] = Variable<double>(prix);
     if (!nullToAbsent || tourTaille != null) {
       map['tour_taille'] = Variable<double>(tourTaille);
     }
-    map['longueur_totale'] = Variable<double>(longueurTotale);
     if (!nullToAbsent || tourPoitrine != null) {
       map['tour_poitrine'] = Variable<double>(tourPoitrine);
     }
-    map['prix'] = Variable<double>(prix);
+    map['longueur_totale'] = Variable<double>(longueurTotale);
     if (!nullToAbsent || commentaire != null) {
       map['commentaire'] = Variable<String>(commentaire);
     }
@@ -225,14 +245,15 @@ class Vetement extends DataClass implements Insertable<Vetement> {
       nom: Value(nom),
       couleurs: Value(couleurs),
       category: Value(category),
+      evenement: Value(evenement),
+      prix: Value(prix),
       tourTaille: tourTaille == null && nullToAbsent
           ? const Value.absent()
           : Value(tourTaille),
-      longueurTotale: Value(longueurTotale),
       tourPoitrine: tourPoitrine == null && nullToAbsent
           ? const Value.absent()
           : Value(tourPoitrine),
-      prix: Value(prix),
+      longueurTotale: Value(longueurTotale),
       commentaire: commentaire == null && nullToAbsent
           ? const Value.absent()
           : Value(commentaire),
@@ -246,11 +267,14 @@ class Vetement extends DataClass implements Insertable<Vetement> {
       id: serializer.fromJson<int>(json['id']),
       nom: serializer.fromJson<String>(json['nom']),
       couleurs: serializer.fromJson<String>(json['couleurs']),
-      category: serializer.fromJson<String>(json['category']),
-      tourTaille: serializer.fromJson<double?>(json['tourTaille']),
-      longueurTotale: serializer.fromJson<double>(json['longueurTotale']),
-      tourPoitrine: serializer.fromJson<double?>(json['tourPoitrine']),
+      category: $VetementsTable.$convertercategory
+          .fromJson(serializer.fromJson<String>(json['category'])),
+      evenement: $VetementsTable.$converterevenement
+          .fromJson(serializer.fromJson<String>(json['evenement'])),
       prix: serializer.fromJson<double>(json['prix']),
+      tourTaille: serializer.fromJson<double?>(json['tourTaille']),
+      tourPoitrine: serializer.fromJson<double?>(json['tourPoitrine']),
+      longueurTotale: serializer.fromJson<double>(json['longueurTotale']),
       commentaire: serializer.fromJson<String?>(json['commentaire']),
     );
   }
@@ -261,11 +285,14 @@ class Vetement extends DataClass implements Insertable<Vetement> {
       'id': serializer.toJson<int>(id),
       'nom': serializer.toJson<String>(nom),
       'couleurs': serializer.toJson<String>(couleurs),
-      'category': serializer.toJson<String>(category),
-      'tourTaille': serializer.toJson<double?>(tourTaille),
-      'longueurTotale': serializer.toJson<double>(longueurTotale),
-      'tourPoitrine': serializer.toJson<double?>(tourPoitrine),
+      'category': serializer
+          .toJson<String>($VetementsTable.$convertercategory.toJson(category)),
+      'evenement': serializer.toJson<String>(
+          $VetementsTable.$converterevenement.toJson(evenement)),
       'prix': serializer.toJson<double>(prix),
+      'tourTaille': serializer.toJson<double?>(tourTaille),
+      'tourPoitrine': serializer.toJson<double?>(tourPoitrine),
+      'longueurTotale': serializer.toJson<double>(longueurTotale),
       'commentaire': serializer.toJson<String?>(commentaire),
     };
   }
@@ -274,22 +301,24 @@ class Vetement extends DataClass implements Insertable<Vetement> {
           {int? id,
           String? nom,
           String? couleurs,
-          String? category,
-          Value<double?> tourTaille = const Value.absent(),
-          double? longueurTotale,
-          Value<double?> tourPoitrine = const Value.absent(),
+          Category? category,
+          TypeEvenement? evenement,
           double? prix,
+          Value<double?> tourTaille = const Value.absent(),
+          Value<double?> tourPoitrine = const Value.absent(),
+          double? longueurTotale,
           Value<String?> commentaire = const Value.absent()}) =>
       Vetement(
         id: id ?? this.id,
         nom: nom ?? this.nom,
         couleurs: couleurs ?? this.couleurs,
         category: category ?? this.category,
+        evenement: evenement ?? this.evenement,
+        prix: prix ?? this.prix,
         tourTaille: tourTaille.present ? tourTaille.value : this.tourTaille,
-        longueurTotale: longueurTotale ?? this.longueurTotale,
         tourPoitrine:
             tourPoitrine.present ? tourPoitrine.value : this.tourPoitrine,
-        prix: prix ?? this.prix,
+        longueurTotale: longueurTotale ?? this.longueurTotale,
         commentaire: commentaire.present ? commentaire.value : this.commentaire,
       );
   Vetement copyWithCompanion(VetementsCompanion data) {
@@ -298,15 +327,16 @@ class Vetement extends DataClass implements Insertable<Vetement> {
       nom: data.nom.present ? data.nom.value : this.nom,
       couleurs: data.couleurs.present ? data.couleurs.value : this.couleurs,
       category: data.category.present ? data.category.value : this.category,
+      evenement: data.evenement.present ? data.evenement.value : this.evenement,
+      prix: data.prix.present ? data.prix.value : this.prix,
       tourTaille:
           data.tourTaille.present ? data.tourTaille.value : this.tourTaille,
-      longueurTotale: data.longueurTotale.present
-          ? data.longueurTotale.value
-          : this.longueurTotale,
       tourPoitrine: data.tourPoitrine.present
           ? data.tourPoitrine.value
           : this.tourPoitrine,
-      prix: data.prix.present ? data.prix.value : this.prix,
+      longueurTotale: data.longueurTotale.present
+          ? data.longueurTotale.value
+          : this.longueurTotale,
       commentaire:
           data.commentaire.present ? data.commentaire.value : this.commentaire,
     );
@@ -319,18 +349,19 @@ class Vetement extends DataClass implements Insertable<Vetement> {
           ..write('nom: $nom, ')
           ..write('couleurs: $couleurs, ')
           ..write('category: $category, ')
-          ..write('tourTaille: $tourTaille, ')
-          ..write('longueurTotale: $longueurTotale, ')
-          ..write('tourPoitrine: $tourPoitrine, ')
+          ..write('evenement: $evenement, ')
           ..write('prix: $prix, ')
+          ..write('tourTaille: $tourTaille, ')
+          ..write('tourPoitrine: $tourPoitrine, ')
+          ..write('longueurTotale: $longueurTotale, ')
           ..write('commentaire: $commentaire')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, nom, couleurs, category, tourTaille,
-      longueurTotale, tourPoitrine, prix, commentaire);
+  int get hashCode => Object.hash(id, nom, couleurs, category, evenement, prix,
+      tourTaille, tourPoitrine, longueurTotale, commentaire);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -339,10 +370,11 @@ class Vetement extends DataClass implements Insertable<Vetement> {
           other.nom == this.nom &&
           other.couleurs == this.couleurs &&
           other.category == this.category &&
-          other.tourTaille == this.tourTaille &&
-          other.longueurTotale == this.longueurTotale &&
-          other.tourPoitrine == this.tourPoitrine &&
+          other.evenement == this.evenement &&
           other.prix == this.prix &&
+          other.tourTaille == this.tourTaille &&
+          other.tourPoitrine == this.tourPoitrine &&
+          other.longueurTotale == this.longueurTotale &&
           other.commentaire == this.commentaire);
 }
 
@@ -350,47 +382,52 @@ class VetementsCompanion extends UpdateCompanion<Vetement> {
   final Value<int> id;
   final Value<String> nom;
   final Value<String> couleurs;
-  final Value<String> category;
-  final Value<double?> tourTaille;
-  final Value<double> longueurTotale;
-  final Value<double?> tourPoitrine;
+  final Value<Category> category;
+  final Value<TypeEvenement> evenement;
   final Value<double> prix;
+  final Value<double?> tourTaille;
+  final Value<double?> tourPoitrine;
+  final Value<double> longueurTotale;
   final Value<String?> commentaire;
   const VetementsCompanion({
     this.id = const Value.absent(),
     this.nom = const Value.absent(),
     this.couleurs = const Value.absent(),
     this.category = const Value.absent(),
-    this.tourTaille = const Value.absent(),
-    this.longueurTotale = const Value.absent(),
-    this.tourPoitrine = const Value.absent(),
+    this.evenement = const Value.absent(),
     this.prix = const Value.absent(),
+    this.tourTaille = const Value.absent(),
+    this.tourPoitrine = const Value.absent(),
+    this.longueurTotale = const Value.absent(),
     this.commentaire = const Value.absent(),
   });
   VetementsCompanion.insert({
     this.id = const Value.absent(),
     required String nom,
     required String couleurs,
-    required String category,
-    this.tourTaille = const Value.absent(),
-    required double longueurTotale,
-    this.tourPoitrine = const Value.absent(),
+    required Category category,
+    required TypeEvenement evenement,
     required double prix,
+    this.tourTaille = const Value.absent(),
+    this.tourPoitrine = const Value.absent(),
+    required double longueurTotale,
     this.commentaire = const Value.absent(),
   })  : nom = Value(nom),
         couleurs = Value(couleurs),
         category = Value(category),
-        longueurTotale = Value(longueurTotale),
-        prix = Value(prix);
+        evenement = Value(evenement),
+        prix = Value(prix),
+        longueurTotale = Value(longueurTotale);
   static Insertable<Vetement> custom({
     Expression<int>? id,
     Expression<String>? nom,
     Expression<String>? couleurs,
     Expression<String>? category,
-    Expression<double>? tourTaille,
-    Expression<double>? longueurTotale,
-    Expression<double>? tourPoitrine,
+    Expression<String>? evenement,
     Expression<double>? prix,
+    Expression<double>? tourTaille,
+    Expression<double>? tourPoitrine,
+    Expression<double>? longueurTotale,
     Expression<String>? commentaire,
   }) {
     return RawValuesInsertable({
@@ -398,10 +435,11 @@ class VetementsCompanion extends UpdateCompanion<Vetement> {
       if (nom != null) 'nom': nom,
       if (couleurs != null) 'couleurs': couleurs,
       if (category != null) 'category': category,
-      if (tourTaille != null) 'tour_taille': tourTaille,
-      if (longueurTotale != null) 'longueur_totale': longueurTotale,
-      if (tourPoitrine != null) 'tour_poitrine': tourPoitrine,
+      if (evenement != null) 'evenement': evenement,
       if (prix != null) 'prix': prix,
+      if (tourTaille != null) 'tour_taille': tourTaille,
+      if (tourPoitrine != null) 'tour_poitrine': tourPoitrine,
+      if (longueurTotale != null) 'longueur_totale': longueurTotale,
       if (commentaire != null) 'commentaire': commentaire,
     });
   }
@@ -410,21 +448,23 @@ class VetementsCompanion extends UpdateCompanion<Vetement> {
       {Value<int>? id,
       Value<String>? nom,
       Value<String>? couleurs,
-      Value<String>? category,
-      Value<double?>? tourTaille,
-      Value<double>? longueurTotale,
-      Value<double?>? tourPoitrine,
+      Value<Category>? category,
+      Value<TypeEvenement>? evenement,
       Value<double>? prix,
+      Value<double?>? tourTaille,
+      Value<double?>? tourPoitrine,
+      Value<double>? longueurTotale,
       Value<String?>? commentaire}) {
     return VetementsCompanion(
       id: id ?? this.id,
       nom: nom ?? this.nom,
       couleurs: couleurs ?? this.couleurs,
       category: category ?? this.category,
-      tourTaille: tourTaille ?? this.tourTaille,
-      longueurTotale: longueurTotale ?? this.longueurTotale,
-      tourPoitrine: tourPoitrine ?? this.tourPoitrine,
+      evenement: evenement ?? this.evenement,
       prix: prix ?? this.prix,
+      tourTaille: tourTaille ?? this.tourTaille,
+      tourPoitrine: tourPoitrine ?? this.tourPoitrine,
+      longueurTotale: longueurTotale ?? this.longueurTotale,
       commentaire: commentaire ?? this.commentaire,
     );
   }
@@ -442,19 +482,24 @@ class VetementsCompanion extends UpdateCompanion<Vetement> {
       map['couleurs'] = Variable<String>(couleurs.value);
     }
     if (category.present) {
-      map['category'] = Variable<String>(category.value);
+      map['category'] = Variable<String>(
+          $VetementsTable.$convertercategory.toSql(category.value));
+    }
+    if (evenement.present) {
+      map['evenement'] = Variable<String>(
+          $VetementsTable.$converterevenement.toSql(evenement.value));
+    }
+    if (prix.present) {
+      map['prix'] = Variable<double>(prix.value);
     }
     if (tourTaille.present) {
       map['tour_taille'] = Variable<double>(tourTaille.value);
     }
-    if (longueurTotale.present) {
-      map['longueur_totale'] = Variable<double>(longueurTotale.value);
-    }
     if (tourPoitrine.present) {
       map['tour_poitrine'] = Variable<double>(tourPoitrine.value);
     }
-    if (prix.present) {
-      map['prix'] = Variable<double>(prix.value);
+    if (longueurTotale.present) {
+      map['longueur_totale'] = Variable<double>(longueurTotale.value);
     }
     if (commentaire.present) {
       map['commentaire'] = Variable<String>(commentaire.value);
@@ -469,10 +514,11 @@ class VetementsCompanion extends UpdateCompanion<Vetement> {
           ..write('nom: $nom, ')
           ..write('couleurs: $couleurs, ')
           ..write('category: $category, ')
-          ..write('tourTaille: $tourTaille, ')
-          ..write('longueurTotale: $longueurTotale, ')
-          ..write('tourPoitrine: $tourPoitrine, ')
+          ..write('evenement: $evenement, ')
           ..write('prix: $prix, ')
+          ..write('tourTaille: $tourTaille, ')
+          ..write('tourPoitrine: $tourPoitrine, ')
+          ..write('longueurTotale: $longueurTotale, ')
           ..write('commentaire: $commentaire')
           ..write(')'))
         .toString();
@@ -2391,6 +2437,230 @@ class RendezVousCompanion extends UpdateCompanion<RendezVousData> {
   }
 }
 
+class $FavorisTable extends Favoris with TableInfo<$FavorisTable, Favori> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $FavorisTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idClientMeta =
+      const VerificationMeta('idClient');
+  @override
+  late final GeneratedColumn<int> idClient = GeneratedColumn<int>(
+      'id_client', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES clients (id)'));
+  static const VerificationMeta _idVetementMeta =
+      const VerificationMeta('idVetement');
+  @override
+  late final GeneratedColumn<int> idVetement = GeneratedColumn<int>(
+      'id_vetement', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES vetements (id)'));
+  @override
+  List<GeneratedColumn> get $columns => [id, idClient, idVetement];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'favoris';
+  @override
+  VerificationContext validateIntegrity(Insertable<Favori> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('id_client')) {
+      context.handle(_idClientMeta,
+          idClient.isAcceptableOrUnknown(data['id_client']!, _idClientMeta));
+    } else if (isInserting) {
+      context.missing(_idClientMeta);
+    }
+    if (data.containsKey('id_vetement')) {
+      context.handle(
+          _idVetementMeta,
+          idVetement.isAcceptableOrUnknown(
+              data['id_vetement']!, _idVetementMeta));
+    } else if (isInserting) {
+      context.missing(_idVetementMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Favori map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Favori(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      idClient: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_client'])!,
+      idVetement: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_vetement'])!,
+    );
+  }
+
+  @override
+  $FavorisTable createAlias(String alias) {
+    return $FavorisTable(attachedDatabase, alias);
+  }
+}
+
+class Favori extends DataClass implements Insertable<Favori> {
+  final int id;
+  final int idClient;
+  final int idVetement;
+  const Favori(
+      {required this.id, required this.idClient, required this.idVetement});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['id_client'] = Variable<int>(idClient);
+    map['id_vetement'] = Variable<int>(idVetement);
+    return map;
+  }
+
+  FavorisCompanion toCompanion(bool nullToAbsent) {
+    return FavorisCompanion(
+      id: Value(id),
+      idClient: Value(idClient),
+      idVetement: Value(idVetement),
+    );
+  }
+
+  factory Favori.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Favori(
+      id: serializer.fromJson<int>(json['id']),
+      idClient: serializer.fromJson<int>(json['idClient']),
+      idVetement: serializer.fromJson<int>(json['idVetement']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'idClient': serializer.toJson<int>(idClient),
+      'idVetement': serializer.toJson<int>(idVetement),
+    };
+  }
+
+  Favori copyWith({int? id, int? idClient, int? idVetement}) => Favori(
+        id: id ?? this.id,
+        idClient: idClient ?? this.idClient,
+        idVetement: idVetement ?? this.idVetement,
+      );
+  Favori copyWithCompanion(FavorisCompanion data) {
+    return Favori(
+      id: data.id.present ? data.id.value : this.id,
+      idClient: data.idClient.present ? data.idClient.value : this.idClient,
+      idVetement:
+          data.idVetement.present ? data.idVetement.value : this.idVetement,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Favori(')
+          ..write('id: $id, ')
+          ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, idClient, idVetement);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Favori &&
+          other.id == this.id &&
+          other.idClient == this.idClient &&
+          other.idVetement == this.idVetement);
+}
+
+class FavorisCompanion extends UpdateCompanion<Favori> {
+  final Value<int> id;
+  final Value<int> idClient;
+  final Value<int> idVetement;
+  const FavorisCompanion({
+    this.id = const Value.absent(),
+    this.idClient = const Value.absent(),
+    this.idVetement = const Value.absent(),
+  });
+  FavorisCompanion.insert({
+    this.id = const Value.absent(),
+    required int idClient,
+    required int idVetement,
+  })  : idClient = Value(idClient),
+        idVetement = Value(idVetement);
+  static Insertable<Favori> custom({
+    Expression<int>? id,
+    Expression<int>? idClient,
+    Expression<int>? idVetement,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (idClient != null) 'id_client': idClient,
+      if (idVetement != null) 'id_vetement': idVetement,
+    });
+  }
+
+  FavorisCompanion copyWith(
+      {Value<int>? id, Value<int>? idClient, Value<int>? idVetement}) {
+    return FavorisCompanion(
+      id: id ?? this.id,
+      idClient: idClient ?? this.idClient,
+      idVetement: idVetement ?? this.idVetement,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (idClient.present) {
+      map['id_client'] = Variable<int>(idClient.value);
+    }
+    if (idVetement.present) {
+      map['id_vetement'] = Variable<int>(idVetement.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FavorisCompanion(')
+          ..write('id: $id, ')
+          ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2401,6 +2671,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CautionsTable cautions = $CautionsTable(this);
   late final $AcomptesTable acomptes = $AcomptesTable(this);
   late final $RendezVousTable rendezVous = $RendezVousTable(this);
+  late final $FavorisTable favoris = $FavorisTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2412,7 +2683,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         reservations,
         cautions,
         acomptes,
-        rendezVous
+        rendezVous,
+        favoris
       ];
 }
 
@@ -2420,22 +2692,24 @@ typedef $$VetementsTableCreateCompanionBuilder = VetementsCompanion Function({
   Value<int> id,
   required String nom,
   required String couleurs,
-  required String category,
-  Value<double?> tourTaille,
-  required double longueurTotale,
-  Value<double?> tourPoitrine,
+  required Category category,
+  required TypeEvenement evenement,
   required double prix,
+  Value<double?> tourTaille,
+  Value<double?> tourPoitrine,
+  required double longueurTotale,
   Value<String?> commentaire,
 });
 typedef $$VetementsTableUpdateCompanionBuilder = VetementsCompanion Function({
   Value<int> id,
   Value<String> nom,
   Value<String> couleurs,
-  Value<String> category,
-  Value<double?> tourTaille,
-  Value<double> longueurTotale,
-  Value<double?> tourPoitrine,
+  Value<Category> category,
+  Value<TypeEvenement> evenement,
   Value<double> prix,
+  Value<double?> tourTaille,
+  Value<double?> tourPoitrine,
+  Value<double> longueurTotale,
   Value<String?> commentaire,
 });
 
@@ -2472,6 +2746,21 @@ final class $$VetementsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$FavorisTable, List<Favori>> _favorisRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.favoris,
+          aliasName:
+              $_aliasNameGenerator(db.vetements.id, db.favoris.idVetement));
+
+  $$FavorisTableProcessedTableManager get favorisRefs {
+    final manager = $$FavorisTableTableManager($_db, $_db.favoris)
+        .filter((f) => f.idVetement.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_favorisRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$VetementsTableFilterComposer
@@ -2492,21 +2781,28 @@ class $$VetementsTableFilterComposer
   ColumnFilters<String> get couleurs => $composableBuilder(
       column: $table.couleurs, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get category => $composableBuilder(
-      column: $table.category, builder: (column) => ColumnFilters(column));
+  ColumnWithTypeConverterFilters<Category, Category, String> get category =>
+      $composableBuilder(
+          column: $table.category,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnWithTypeConverterFilters<TypeEvenement, TypeEvenement, String>
+      get evenement => $composableBuilder(
+          column: $table.evenement,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<double> get prix => $composableBuilder(
+      column: $table.prix, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get tourTaille => $composableBuilder(
       column: $table.tourTaille, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get longueurTotale => $composableBuilder(
-      column: $table.longueurTotale,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<double> get tourPoitrine => $composableBuilder(
       column: $table.tourPoitrine, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<double> get prix => $composableBuilder(
-      column: $table.prix, builder: (column) => ColumnFilters(column));
+  ColumnFilters<double> get longueurTotale => $composableBuilder(
+      column: $table.longueurTotale,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get commentaire => $composableBuilder(
       column: $table.commentaire, builder: (column) => ColumnFilters(column));
@@ -2552,6 +2848,27 @@ class $$VetementsTableFilterComposer
             ));
     return f(composer);
   }
+
+  Expression<bool> favorisRefs(
+      Expression<bool> Function($$FavorisTableFilterComposer f) f) {
+    final $$FavorisTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idVetement,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableFilterComposer(
+              $db: $db,
+              $table: $db.favoris,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$VetementsTableOrderingComposer
@@ -2575,19 +2892,22 @@ class $$VetementsTableOrderingComposer
   ColumnOrderings<String> get category => $composableBuilder(
       column: $table.category, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get evenement => $composableBuilder(
+      column: $table.evenement, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get prix => $composableBuilder(
+      column: $table.prix, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get tourTaille => $composableBuilder(
       column: $table.tourTaille, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<double> get longueurTotale => $composableBuilder(
-      column: $table.longueurTotale,
-      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<double> get tourPoitrine => $composableBuilder(
       column: $table.tourPoitrine,
       builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<double> get prix => $composableBuilder(
-      column: $table.prix, builder: (column) => ColumnOrderings(column));
+  ColumnOrderings<double> get longueurTotale => $composableBuilder(
+      column: $table.longueurTotale,
+      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<String> get commentaire => $composableBuilder(
       column: $table.commentaire, builder: (column) => ColumnOrderings(column));
@@ -2611,20 +2931,23 @@ class $$VetementsTableAnnotationComposer
   GeneratedColumn<String> get couleurs =>
       $composableBuilder(column: $table.couleurs, builder: (column) => column);
 
-  GeneratedColumn<String> get category =>
+  GeneratedColumnWithTypeConverter<Category, String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<TypeEvenement, String> get evenement =>
+      $composableBuilder(column: $table.evenement, builder: (column) => column);
+
+  GeneratedColumn<double> get prix =>
+      $composableBuilder(column: $table.prix, builder: (column) => column);
 
   GeneratedColumn<double> get tourTaille => $composableBuilder(
       column: $table.tourTaille, builder: (column) => column);
 
-  GeneratedColumn<double> get longueurTotale => $composableBuilder(
-      column: $table.longueurTotale, builder: (column) => column);
-
   GeneratedColumn<double> get tourPoitrine => $composableBuilder(
       column: $table.tourPoitrine, builder: (column) => column);
 
-  GeneratedColumn<double> get prix =>
-      $composableBuilder(column: $table.prix, builder: (column) => column);
+  GeneratedColumn<double> get longueurTotale => $composableBuilder(
+      column: $table.longueurTotale, builder: (column) => column);
 
   GeneratedColumn<String> get commentaire => $composableBuilder(
       column: $table.commentaire, builder: (column) => column);
@@ -2670,6 +2993,27 @@ class $$VetementsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> favorisRefs<T extends Object>(
+      Expression<T> Function($$FavorisTableAnnotationComposer a) f) {
+    final $$FavorisTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idVetement,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableAnnotationComposer(
+              $db: $db,
+              $table: $db.favoris,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$VetementsTableTableManager extends RootTableManager<
@@ -2683,7 +3027,8 @@ class $$VetementsTableTableManager extends RootTableManager<
     $$VetementsTableUpdateCompanionBuilder,
     (Vetement, $$VetementsTableReferences),
     Vetement,
-    PrefetchHooks Function({bool photosRefs, bool reservationsRefs})> {
+    PrefetchHooks Function(
+        {bool photosRefs, bool reservationsRefs, bool favorisRefs})> {
   $$VetementsTableTableManager(_$AppDatabase db, $VetementsTable table)
       : super(TableManagerState(
           db: db,
@@ -2698,11 +3043,12 @@ class $$VetementsTableTableManager extends RootTableManager<
             Value<int> id = const Value.absent(),
             Value<String> nom = const Value.absent(),
             Value<String> couleurs = const Value.absent(),
-            Value<String> category = const Value.absent(),
-            Value<double?> tourTaille = const Value.absent(),
-            Value<double> longueurTotale = const Value.absent(),
-            Value<double?> tourPoitrine = const Value.absent(),
+            Value<Category> category = const Value.absent(),
+            Value<TypeEvenement> evenement = const Value.absent(),
             Value<double> prix = const Value.absent(),
+            Value<double?> tourTaille = const Value.absent(),
+            Value<double?> tourPoitrine = const Value.absent(),
+            Value<double> longueurTotale = const Value.absent(),
             Value<String?> commentaire = const Value.absent(),
           }) =>
               VetementsCompanion(
@@ -2710,21 +3056,23 @@ class $$VetementsTableTableManager extends RootTableManager<
             nom: nom,
             couleurs: couleurs,
             category: category,
-            tourTaille: tourTaille,
-            longueurTotale: longueurTotale,
-            tourPoitrine: tourPoitrine,
+            evenement: evenement,
             prix: prix,
+            tourTaille: tourTaille,
+            tourPoitrine: tourPoitrine,
+            longueurTotale: longueurTotale,
             commentaire: commentaire,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
             required String nom,
             required String couleurs,
-            required String category,
-            Value<double?> tourTaille = const Value.absent(),
-            required double longueurTotale,
-            Value<double?> tourPoitrine = const Value.absent(),
+            required Category category,
+            required TypeEvenement evenement,
             required double prix,
+            Value<double?> tourTaille = const Value.absent(),
+            Value<double?> tourPoitrine = const Value.absent(),
+            required double longueurTotale,
             Value<String?> commentaire = const Value.absent(),
           }) =>
               VetementsCompanion.insert(
@@ -2732,10 +3080,11 @@ class $$VetementsTableTableManager extends RootTableManager<
             nom: nom,
             couleurs: couleurs,
             category: category,
-            tourTaille: tourTaille,
-            longueurTotale: longueurTotale,
-            tourPoitrine: tourPoitrine,
+            evenement: evenement,
             prix: prix,
+            tourTaille: tourTaille,
+            tourPoitrine: tourPoitrine,
+            longueurTotale: longueurTotale,
             commentaire: commentaire,
           ),
           withReferenceMapper: (p0) => p0
@@ -2745,12 +3094,15 @@ class $$VetementsTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {photosRefs = false, reservationsRefs = false}) {
+              {photosRefs = false,
+              reservationsRefs = false,
+              favorisRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (photosRefs) db.photos,
-                if (reservationsRefs) db.reservations
+                if (reservationsRefs) db.reservations,
+                if (favorisRefs) db.favoris
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -2778,6 +3130,18 @@ class $$VetementsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem:
                             (item, referencedItems) => referencedItems
                                 .where((e) => e.idVetement == item.id),
+                        typedResults: items),
+                  if (favorisRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$VetementsTableReferences._favorisRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$VetementsTableReferences(db, table, p0)
+                                .favorisRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.idVetement == item.id),
                         typedResults: items)
                 ];
               },
@@ -2797,7 +3161,8 @@ typedef $$VetementsTableProcessedTableManager = ProcessedTableManager<
     $$VetementsTableUpdateCompanionBuilder,
     (Vetement, $$VetementsTableReferences),
     Vetement,
-    PrefetchHooks Function({bool photosRefs, bool reservationsRefs})>;
+    PrefetchHooks Function(
+        {bool photosRefs, bool reservationsRefs, bool favorisRefs})>;
 typedef $$PhotosTableCreateCompanionBuilder = PhotosCompanion Function({
   Value<int> id,
   required int idVetement,
@@ -3082,6 +3447,20 @@ final class $$ClientsTableReferences
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: cache));
   }
+
+  static MultiTypedResultKey<$FavorisTable, List<Favori>> _favorisRefsTable(
+          _$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(db.favoris,
+          aliasName: $_aliasNameGenerator(db.clients.id, db.favoris.idClient));
+
+  $$FavorisTableProcessedTableManager get favorisRefs {
+    final manager = $$FavorisTableTableManager($_db, $_db.favoris)
+        .filter((f) => f.idClient.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_favorisRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
 }
 
 class $$ClientsTableFilterComposer
@@ -3145,6 +3524,27 @@ class $$ClientsTableFilterComposer
             $$RendezVousTableFilterComposer(
               $db: $db,
               $table: $db.rendezVous,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+
+  Expression<bool> favorisRefs(
+      Expression<bool> Function($$FavorisTableFilterComposer f) f) {
+    final $$FavorisTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idClient,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableFilterComposer(
+              $db: $db,
+              $table: $db.favoris,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -3250,6 +3650,27 @@ class $$ClientsTableAnnotationComposer
             ));
     return f(composer);
   }
+
+  Expression<T> favorisRefs<T extends Object>(
+      Expression<T> Function($$FavorisTableAnnotationComposer a) f) {
+    final $$FavorisTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.id,
+        referencedTable: $db.favoris,
+        getReferencedColumn: (t) => t.idClient,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$FavorisTableAnnotationComposer(
+              $db: $db,
+              $table: $db.favoris,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$ClientsTableTableManager extends RootTableManager<
@@ -3263,7 +3684,8 @@ class $$ClientsTableTableManager extends RootTableManager<
     $$ClientsTableUpdateCompanionBuilder,
     (Client, $$ClientsTableReferences),
     Client,
-    PrefetchHooks Function({bool reservationsRefs, bool rendezVousRefs})> {
+    PrefetchHooks Function(
+        {bool reservationsRefs, bool rendezVousRefs, bool favorisRefs})> {
   $$ClientsTableTableManager(_$AppDatabase db, $ClientsTable table)
       : super(TableManagerState(
           db: db,
@@ -3311,12 +3733,15 @@ class $$ClientsTableTableManager extends RootTableManager<
                   (e.readTable(table), $$ClientsTableReferences(db, table, e)))
               .toList(),
           prefetchHooksCallback: (
-              {reservationsRefs = false, rendezVousRefs = false}) {
+              {reservationsRefs = false,
+              rendezVousRefs = false,
+              favorisRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [
                 if (reservationsRefs) db.reservations,
-                if (rendezVousRefs) db.rendezVous
+                if (rendezVousRefs) db.rendezVous,
+                if (favorisRefs) db.favoris
               ],
               addJoins: null,
               getPrefetchedDataCallback: (items) async {
@@ -3344,6 +3769,17 @@ class $$ClientsTableTableManager extends RootTableManager<
                         referencedItemsForCurrentItem: (item,
                                 referencedItems) =>
                             referencedItems.where((e) => e.idClient == item.id),
+                        typedResults: items),
+                  if (favorisRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable:
+                            $$ClientsTableReferences._favorisRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$ClientsTableReferences(db, table, p0).favorisRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.idClient == item.id),
                         typedResults: items)
                 ];
               },
@@ -3363,7 +3799,8 @@ typedef $$ClientsTableProcessedTableManager = ProcessedTableManager<
     $$ClientsTableUpdateCompanionBuilder,
     (Client, $$ClientsTableReferences),
     Client,
-    PrefetchHooks Function({bool reservationsRefs, bool rendezVousRefs})>;
+    PrefetchHooks Function(
+        {bool reservationsRefs, bool rendezVousRefs, bool favorisRefs})>;
 typedef $$ReservationsTableCreateCompanionBuilder = ReservationsCompanion
     Function({
   Value<int> id,
@@ -4714,6 +5151,316 @@ typedef $$RendezVousTableProcessedTableManager = ProcessedTableManager<
     (RendezVousData, $$RendezVousTableReferences),
     RendezVousData,
     PrefetchHooks Function({bool idClient})>;
+typedef $$FavorisTableCreateCompanionBuilder = FavorisCompanion Function({
+  Value<int> id,
+  required int idClient,
+  required int idVetement,
+});
+typedef $$FavorisTableUpdateCompanionBuilder = FavorisCompanion Function({
+  Value<int> id,
+  Value<int> idClient,
+  Value<int> idVetement,
+});
+
+final class $$FavorisTableReferences
+    extends BaseReferences<_$AppDatabase, $FavorisTable, Favori> {
+  $$FavorisTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ClientsTable _idClientTable(_$AppDatabase db) => db.clients
+      .createAlias($_aliasNameGenerator(db.favoris.idClient, db.clients.id));
+
+  $$ClientsTableProcessedTableManager get idClient {
+    final $_column = $_itemColumn<int>('id_client')!;
+
+    final manager = $$ClientsTableTableManager($_db, $_db.clients)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_idClientTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $VetementsTable _idVetementTable(_$AppDatabase db) =>
+      db.vetements.createAlias(
+          $_aliasNameGenerator(db.favoris.idVetement, db.vetements.id));
+
+  $$VetementsTableProcessedTableManager get idVetement {
+    final $_column = $_itemColumn<int>('id_vetement')!;
+
+    final manager = $$VetementsTableTableManager($_db, $_db.vetements)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_idVetementTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$FavorisTableFilterComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  $$ClientsTableFilterComposer get idClient {
+    final $$ClientsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableFilterComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableFilterComposer get idVetement {
+    final $$VetementsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableFilterComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableOrderingComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  $$ClientsTableOrderingComposer get idClient {
+    final $$ClientsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableOrderingComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableOrderingComposer get idVetement {
+    final $$VetementsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableOrderingComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableAnnotationComposer
+    extends Composer<_$AppDatabase, $FavorisTable> {
+  $$FavorisTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  $$ClientsTableAnnotationComposer get idClient {
+    final $$ClientsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idClient,
+        referencedTable: $db.clients,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$ClientsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableAnnotationComposer get idVetement {
+    final $$VetementsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.vetements,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$FavorisTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $FavorisTable,
+    Favori,
+    $$FavorisTableFilterComposer,
+    $$FavorisTableOrderingComposer,
+    $$FavorisTableAnnotationComposer,
+    $$FavorisTableCreateCompanionBuilder,
+    $$FavorisTableUpdateCompanionBuilder,
+    (Favori, $$FavorisTableReferences),
+    Favori,
+    PrefetchHooks Function({bool idClient, bool idVetement})> {
+  $$FavorisTableTableManager(_$AppDatabase db, $FavorisTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$FavorisTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$FavorisTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$FavorisTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<int> idClient = const Value.absent(),
+            Value<int> idVetement = const Value.absent(),
+          }) =>
+              FavorisCompanion(
+            id: id,
+            idClient: idClient,
+            idVetement: idVetement,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required int idClient,
+            required int idVetement,
+          }) =>
+              FavorisCompanion.insert(
+            id: id,
+            idClient: idClient,
+            idVetement: idVetement,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$FavorisTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({idClient = false, idVetement = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (idClient) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idClient,
+                    referencedTable:
+                        $$FavorisTableReferences._idClientTable(db),
+                    referencedColumn:
+                        $$FavorisTableReferences._idClientTable(db).id,
+                  ) as T;
+                }
+                if (idVetement) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idVetement,
+                    referencedTable:
+                        $$FavorisTableReferences._idVetementTable(db),
+                    referencedColumn:
+                        $$FavorisTableReferences._idVetementTable(db).id,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$FavorisTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $FavorisTable,
+    Favori,
+    $$FavorisTableFilterComposer,
+    $$FavorisTableOrderingComposer,
+    $$FavorisTableAnnotationComposer,
+    $$FavorisTableCreateCompanionBuilder,
+    $$FavorisTableUpdateCompanionBuilder,
+    (Favori, $$FavorisTableReferences),
+    Favori,
+    PrefetchHooks Function({bool idClient, bool idVetement})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4732,4 +5479,6 @@ class $AppDatabaseManager {
       $$AcomptesTableTableManager(_db, _db.acomptes);
   $$RendezVousTableTableManager get rendezVous =>
       $$RendezVousTableTableManager(_db, _db.rendezVous);
+  $$FavorisTableTableManager get favoris =>
+      $$FavorisTableTableManager(_db, _db.favoris);
 }

@@ -1,3 +1,5 @@
+import 'package:cassiopee_couture_app/src/newVersionCheck/newVersionCheck.dart'
+    show executeSteps;
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
@@ -18,7 +20,7 @@ void main() async {
 
   final settingsController = SettingsController(SettingsService());
   await settingsController.loadSettings();
-
+  executeSteps();
   try {
     // Créer une nouvelle instance de la base de données
     final database = AppDatabase();

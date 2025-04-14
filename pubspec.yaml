@@ -15,13 +15,16 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   drift: ^2.15.0
+  dio: ^5.0.0
   sqlite3: ^2.1.0
   sqlite3_flutter_libs: ^0.5.0
+  open_file: ^3.0.3
   path_provider: ^2.0.0
   path: ^1.8.3
   table_calendar: ^3.0.9
   image_picker: ^1.0.7
   flutter_gen: ^5.9.0
+  permission_handler: ^11.4.0
 
 dev_dependencies:
   flutter_test:

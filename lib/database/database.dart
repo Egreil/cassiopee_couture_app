@@ -9,15 +9,18 @@ import 'tables.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(tables: [
-  Vetements,
-  Photos,
-  Reservations,
-  Cautions,
-  Acomptes,
-  Clients,
-  RendezVous,
-])
+@DriftDatabase(
+  tables: [
+    Vetements,
+    Photos,
+    Reservations,
+    Cautions,
+    Acomptes,
+    Clients,
+    RendezVous,
+    Favoris,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
@@ -37,6 +40,7 @@ class AppDatabase extends _$AppDatabase {
         },
         beforeOpen: (details) async {
           if (details.wasCreated) {
+            await customStatement('PRAGMA foreign_keys = ON');
             print('Base de données créée avec succès');
           }
           if (details.hadUpgrade) {

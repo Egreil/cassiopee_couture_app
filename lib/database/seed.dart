@@ -59,7 +59,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Robe de Soirée Noire',
         couleurs: 'Noir',
-        category: 'robe',
+        category: Category.robe,
+        evenement: TypeEvenement.soiree,
         longueurTotale: 150,
         prix: 250.0,
         tourTaille: const Value(70),
@@ -69,7 +70,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Jupe Plissée',
         couleurs: 'Bleu marine',
-        category: 'jupe',
+        category: Category.jupe,
+        evenement: TypeEvenement.soiree,
         longueurTotale: 65,
         prix: 120.0,
         tourTaille: const Value(65),
@@ -79,7 +81,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Top Dentelle',
         couleurs: 'Blanc',
-        category: 'haut',
+        category: Category.haut,
+        evenement: TypeEvenement.soiree,
         longueurTotale: 45,
         prix: 85.0,
         tourTaille: const Value(null),
@@ -89,7 +92,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Robe Cocktail',
         couleurs: 'Rouge',
-        category: 'robe',
+        category: Category.robe,
+        evenement: TypeEvenement.soiree,
         longueurTotale: 120,
         prix: 250.0,
         tourTaille: const Value(75),
@@ -99,7 +103,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Tailleur Pantalon',
         couleurs: 'Gris',
-        category: 'ensemble',
+        category: Category.ensemble,
+        evenement: TypeEvenement.mariage,
         longueurTotale: 140,
         prix: 120.0,
         tourTaille: const Value(68),
@@ -109,7 +114,8 @@ class DatabaseSeeder {
       VetementsCompanion.insert(
         nom: 'Robe Longue Fleurie',
         couleurs: 'Multicolore',
-        category: 'robe',
+        category: Category.robe,
+        evenement: TypeEvenement.mariage,
         longueurTotale: 160,
         prix: 85.0,
         tourTaille: const Value(72),

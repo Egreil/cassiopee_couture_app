@@ -1,4 +1,5 @@
 import 'package:cassiopee_couture_app/database/tables.dart';
+import 'package:cassiopee_couture_app/src/menu/gestion/components/clients/clients_search_view.dart';
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../../../database/database.dart';
@@ -55,6 +56,21 @@ class _RendezVousFormViewState extends State<RendezVousFormView> {
     }
   }
 
+  Future<void> _selectClient() async {
+    final selectedClient = await Navigator.push<Client>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ClientsSearchView(database: widget.database),
+      ),
+    );
+
+    if (selectedClient != null) {
+      setState(() {
+        _selectedClient = selectedClient;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,46 +112,21 @@ class _RendezVousFormViewState extends State<RendezVousFormView> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (widget.client == null && widget.rendezVous == null) ...[
-                StreamBuilder<List<Client>>(
-                  stream:
-                      widget.database.select(widget.database.clients).watch(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const CircularProgressIndicator();
-                    }
-
-                    return DropdownButtonFormField<Client>(
-                      value: _selectedClient,
-                      decoration: const InputDecoration(
-                        labelText: 'Client *',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: snapshot.data!.map((client) {
-                        return DropdownMenuItem(
-                          value: client,
-                          child: Text('${client.prenom} ${client.nom}'),
-                        );
-                      }).toList(),
-                      onChanged: (Client? value) {
-                        setState(() {
-                          _selectedClient = value;
-                        });
-                      },
-                      validator: (value) => value == null
-                          ? 'Veuillez sélectionner un client'
-                          : null,
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-              ] else
-                ListTile(
-                  title: Text('Client'),
-                  subtitle: Text(_selectedClient == null
-                      ? 'Chargement...'
+              // Sélecteur de client
+              Card(
+                child: ListTile(
+                  title: Text(_selectedClient == null
+                      ? 'Sélectionner un client'
                       : '${_selectedClient!.prenom} ${_selectedClient!.nom}'),
+                  subtitle: _selectedClient == null
+                      ? const Text('Cliquez pour sélectionner')
+                      : Text(_selectedClient!.numero),
+                  leading: const Icon(Icons.person),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: !widget.readOnly ? _selectClient : null,
                 ),
+              ),
+              const SizedBox(height: 16),
 
               // Date
               ListTile(

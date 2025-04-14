@@ -102,13 +102,29 @@ class MainMenuView extends StatelessWidget {
                 _MenuItem(
                   'Nouveau rendez-vous',
                   Icons.event_available,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          RendezVousFormView(database: database),
-                    ),
-                  ),
+                  () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RendezVousFormView(database: database),
+                      ),
+                    );
+
+                    if (result == true) {
+                      print(
+                          "Retour du formulaire de rendez-vous - rafraîchissement nécessaire");
+                      if (context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DatabaseView(database: database),
+                          ),
+                        );
+                      }
+                    }
+                  },
                 ),
               ],
             ),
