@@ -2,6 +2,7 @@ import 'package:cassiopee_couture_app/src/menu/gestion/gestion_tasks_view.dart';
 import 'package:drift/drift.dart' show innerJoin;
 import 'package:flutter/material.dart';
 import '../../../../database/database.dart';
+import '../../../acomptes/acompte_validation_view.dart';
 
 class AcomptesSection extends StatefulWidget {
   final AppDatabase database;
@@ -19,87 +20,102 @@ class AcomptesSection extends StatefulWidget {
 }
 
 class _AcomptesSectionState extends State<AcomptesSection> {
-  Stream<List<AcompteWithClientAndVetement>> _getAcomptes() {
-    return (widget.database.select(widget.database.acomptes)
-          ..where((a) => a.paye.equals(0)))
-        .join([
-          innerJoin(
-            widget.database.reservations,
-            widget.database.reservations.id
-                .equalsExp(widget.database.acomptes.idReservation),
-          ),
-          innerJoin(
-            widget.database.clients,
-            widget.database.clients.id
-                .equalsExp(widget.database.reservations.idClient),
-          ),
-          innerJoin(
-            widget.database.vetements,
-            widget.database.vetements.id
-                .equalsExp(widget.database.reservations.idVetement),
-          ),
-        ])
-        .watch()
-        .map((rows) => rows
-            .map((row) {
-              final acompte = row.readTable(widget.database.acomptes);
-              final client = row.readTable(widget.database.clients);
-              final vetement = row.readTable(widget.database.vetements);
+  late Future<List<AcompteWithClientAndVetement>> _acomptesFuture;
 
-              // Filtrer les paiements complets vs acomptes
-              if (widget.isPaiementComplet &&
-                  acompte.montant != vetement.prix) {
-                return null;
-              }
-              if (!widget.isPaiementComplet &&
-                  acompte.montant == vetement.prix) {
-                return null;
-              }
+  @override
+  void initState() {
+    super.initState();
+    _refreshAcomptes();
+  }
 
-              return AcompteWithClientAndVetement(
-                id: acompte.id,
-                montant: acompte.montant,
-                datePaiement: acompte.datePaiement,
-                paye: acompte.paye,
-                client: client,
-                vetement: vetement,
-              );
-            })
-            .where((element) => element != null)
-            .cast<AcompteWithClientAndVetement>()
-            .toList());
+  void _refreshAcomptes() {
+    setState(() {
+      _acomptesFuture = _getAcomptes();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<AcompteWithClientAndVetement>>(
-      stream: _getAcomptes(),
+    return FutureBuilder<List<AcompteWithClientAndVetement>>(
+      future: _acomptesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snapshot.hasError) {
+          return Center(child: Text('Erreur: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('Aucun acompte à afficher'));
+        }
 
-        final acomptes = snapshot.data ?? [];
-        return Column(
-          children: acomptes.map((acompte) {
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: snapshot.data!.length,
+          itemBuilder: (context, index) {
+            final acompte = snapshot.data![index];
             return Card(
               child: ListTile(
-                title: Text(acompte.vetement.nom),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        'Client: ${acompte.client.prenom} ${acompte.client.nom}'),
-                    Text('Tél: ${acompte.client.numero}'),
-                  ],
-                ),
-                trailing: Text('${acompte.montant.toStringAsFixed(2)} €'),
-                isThreeLine: true,
+                title: Text('${acompte.client.prenom} ${acompte.client.nom}'),
+                subtitle: Text(
+                    'Acompte: ${acompte.montant}€ - ${acompte.vetement.nom}'),
+                onTap: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AcompteValidationView(
+                        database: widget.database,
+                        acompte: acompte,
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    _refreshAcomptes(); // Rafraîchir la liste après validation
+                  }
+                },
               ),
             );
-          }).toList(),
+          },
         );
       },
     );
+  }
+
+  Future<List<AcompteWithClientAndVetement>> _getAcomptes() async {
+    final results = await (widget.database.select(widget.database.acomptes)
+          ..where((a) => a.paye.equals(widget.isPaiementComplet ? 1 : 0)))
+        .join([
+      innerJoin(
+        widget.database.reservations,
+        widget.database.reservations.id
+            .equalsExp(widget.database.acomptes.idReservation),
+      ),
+      innerJoin(
+        widget.database.clients,
+        widget.database.clients.id
+            .equalsExp(widget.database.reservations.idClient),
+      ),
+      innerJoin(
+        widget.database.vetements,
+        widget.database.vetements.id
+            .equalsExp(widget.database.reservations.idVetement),
+      ),
+    ]).get();
+
+    return results.map((row) {
+      final acompte = row.readTable(widget.database.acomptes);
+      final client = row.readTable(widget.database.clients);
+      final vetement = row.readTable(widget.database.vetements);
+
+      return AcompteWithClientAndVetement(
+        id: acompte.id,
+        montant: acompte.montant,
+        datePaiement: acompte.datePaiement,
+        client: client,
+        vetement: vetement,
+        paye: acompte.paye,
+      );
+    }).toList();
   }
 }
