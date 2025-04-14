@@ -12,8 +12,13 @@ import 'vetement_details_screen.dart';
 
 class VetementsGridView extends StatefulWidget {
   final AppDatabase database;
+  final Client? initialClient;
 
-  const VetementsGridView({super.key, required this.database});
+  const VetementsGridView({
+    super.key,
+    required this.database,
+    this.initialClient,
+  });
 
   @override
   State<VetementsGridView> createState() => _VetementsGridViewState();
@@ -29,6 +34,25 @@ class _VetementsGridViewState extends State<VetementsGridView> {
   double? maxPoitrine;
   Client? selectedClient;
   bool _showOnlyFavorites = false;
+  List<int> _favoris = [];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedClient = widget.initialClient;
+    _loadFavoris();
+  }
+
+  Future<void> _loadFavoris() async {
+    if (selectedClient != null) {
+      final favoris = await (widget.database.select(widget.database.favoris)
+            ..where((f) => f.idClient.equals(selectedClient!.id)))
+          .get();
+      setState(() {
+        _favoris = favoris.map((f) => f.idVetement).toList();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -262,6 +286,7 @@ class _VetementsGridViewState extends State<VetementsGridView> {
                   builder: (context) => VetementDetailsScreen(
                     database: widget.database,
                     vetementId: vetement.id,
+                    client: selectedClient,
                   ),
                 ),
               );
@@ -316,23 +341,28 @@ class _VetementsGridViewState extends State<VetementsGridView> {
             Positioned(
               top: 8,
               right: 8,
-              child: StreamBuilder<bool>(
-                stream: _isFavori(vetement.id),
-                builder: (context, snapshot) {
-                  final isFavori = snapshot.data ?? false;
-                  return IconButton(
-                    icon: Icon(
-                      isFavori ? Icons.favorite : Icons.favorite_border,
-                      color: isFavori ? Colors.red : Colors.grey,
-                    ),
-                    onPressed: () => _toggleFavori(vetement.id),
-                  );
-                },
+              child: FavoriButton(
+                vetementId: vetement.id,
+                clientId: selectedClient!.id,
+                database: widget.database,
+                initialFavori: _favoris.contains(vetement.id),
+                onToggle: (bool isFavori) =>
+                    _toggleFavoriLocally(vetement.id, isFavori),
               ),
             ),
         ],
       ),
     );
+  }
+
+  void _toggleFavoriLocally(int vetementId, bool isFavori) {
+    setState(() {
+      if (isFavori) {
+        _favoris.add(vetementId);
+      } else {
+        _favoris.remove(vetementId);
+      }
+    });
   }
 
   Stream<List<(Vetement, List<Photo>)>> _getVetementsWithPhotos() {
@@ -342,13 +372,7 @@ class _VetementsGridViewState extends State<VetementsGridView> {
 
             // Filtre des favoris
             if (_showOnlyFavorites && selectedClient != null) {
-              List<int> favorisIds = [];
-              (widget.database.select(widget.database.favoris)
-                    ..where((f) => f.idClient.equals(selectedClient!.id)))
-                  .get()
-                  .then((favoris) => favoris.map((f) => f.idVetement).toList())
-                  .then((listFavoris) => favorisIds = listFavoris);
-              predicate = predicate & v.id.isIn(favorisIds);
+              predicate = predicate & v.id.isIn(_favoris);
             }
 
             // Filtre par catégorie
@@ -412,40 +436,6 @@ class _VetementsGridViewState extends State<VetementsGridView> {
     });
   }
 
-  Stream<bool> _isFavori(int vetementId) {
-    if (selectedClient == null) return Stream.value(false);
-    return (widget.database.select(widget.database.favoris)
-          ..where((f) =>
-              f.idClient.equals(selectedClient!.id) &
-              f.idVetement.equals(vetementId)))
-        .watch()
-        .map((favoris) => favoris.isNotEmpty);
-  }
-
-  Future<void> _toggleFavori(int vetementId) async {
-    if (selectedClient == null) return;
-
-    final existingFavori =
-        await (widget.database.select(widget.database.favoris)
-              ..where((f) =>
-                  f.idClient.equals(selectedClient!.id) &
-                  f.idVetement.equals(vetementId)))
-            .getSingleOrNull();
-
-    if (existingFavori == null) {
-      await widget.database.into(widget.database.favoris).insert(
-            FavorisCompanion.insert(
-              idClient: selectedClient!.id,
-              idVetement: vetementId,
-            ),
-          );
-    } else {
-      await (widget.database.delete(widget.database.favoris)
-            ..where((f) => f.id.equals(existingFavori.id)))
-          .go();
-    }
-  }
-
   Future<void> _showClientSelector() async {
     final client = await showDialog<Client>(
       context: context,
@@ -455,13 +445,14 @@ class _VetementsGridViewState extends State<VetementsGridView> {
     if (client != null) {
       setState(() {
         selectedClient = client;
+        _showOnlyFavorites = false;
       });
+      await _loadFavoris();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text('Client sélectionné : ${client.prenom} ${client.nom}'),
-          ),
+              content:
+                  Text('Client sélectionné : ${client.prenom} ${client.nom}')),
         );
       }
     }
@@ -513,6 +504,78 @@ class ClientSelectorDialog extends StatelessWidget {
           child: const Text('Annuler'),
         ),
       ],
+    );
+  }
+}
+
+// Nouveau widget pour le bouton favori
+class FavoriButton extends StatefulWidget {
+  final int vetementId;
+  final int clientId;
+  final AppDatabase database;
+  final bool initialFavori;
+  final Function(bool)? onToggle;
+
+  const FavoriButton({
+    super.key,
+    required this.vetementId,
+    required this.clientId,
+    required this.database,
+    required this.initialFavori,
+    this.onToggle,
+  });
+
+  @override
+  State<FavoriButton> createState() => _FavoriButtonState();
+}
+
+class _FavoriButtonState extends State<FavoriButton> {
+  late bool isFavori;
+
+  @override
+  void initState() {
+    super.initState();
+    isFavori = widget.initialFavori;
+  }
+
+  Future<void> _toggleFavori() async {
+    try {
+      final existingFavori =
+          await (widget.database.select(widget.database.favoris)
+                ..where((f) =>
+                    f.idClient.equals(widget.clientId) &
+                    f.idVetement.equals(widget.vetementId)))
+              .getSingleOrNull();
+
+      if (existingFavori == null) {
+        await widget.database.into(widget.database.favoris).insert(
+              FavorisCompanion.insert(
+                idClient: widget.clientId,
+                idVetement: widget.vetementId,
+              ),
+            );
+        setState(() => isFavori = true);
+        widget.onToggle?.call(true);
+      } else {
+        await (widget.database.delete(widget.database.favoris)
+              ..where((f) => f.id.equals(existingFavori.id)))
+            .go();
+        setState(() => isFavori = false);
+        widget.onToggle?.call(false);
+      }
+    } catch (e) {
+      // Gérer l'erreur si nécessaire
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        isFavori ? Icons.favorite : Icons.favorite_border,
+        color: isFavori ? Colors.red : Colors.grey,
+      ),
+      onPressed: _toggleFavori,
     );
   }
 }

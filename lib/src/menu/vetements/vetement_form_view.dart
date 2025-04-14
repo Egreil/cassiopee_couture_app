@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cassiopee_couture_app/database/tables.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../database/database.dart';
@@ -16,7 +17,8 @@ class VetementFormView extends StatefulWidget {
 
 class _VetementFormViewState extends State<VetementFormView> {
   final _formKey = GlobalKey<FormState>();
-  String? selectedCategory;
+  Category? selectedCategory;
+  TypeEvenement? selectedEvenement;
   final TextEditingController _nomController = TextEditingController();
   final TextEditingController _couleursController = TextEditingController();
   final TextEditingController _prixController = TextEditingController();
@@ -46,16 +48,16 @@ class _VetementFormViewState extends State<VetementFormView> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Catégorie
-              DropdownButtonFormField<String>(
+              DropdownButtonFormField<Category>(
                 value: selectedCategory,
                 decoration: const InputDecoration(
                   labelText: 'Catégorie *',
                   border: OutlineInputBorder(),
                 ),
-                items: ['robe', 'jupe', 'haut']
+                items: Category.values
                     .map((category) => DropdownMenuItem(
                           value: category,
-                          child: Text(category),
+                          child: Text(category.name),
                         ))
                     .toList(),
                 onChanged: (value) {
@@ -65,6 +67,32 @@ class _VetementFormViewState extends State<VetementFormView> {
                 },
                 validator: (value) =>
                     value == null ? 'Veuillez choisir une catégorie' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Type d'événement
+              DropdownButtonFormField<TypeEvenement>(
+                value: selectedEvenement,
+                decoration: const InputDecoration(
+                  labelText: 'Type d\'événement *',
+                  border: OutlineInputBorder(),
+                ),
+                items: TypeEvenement.values
+                    .map((type) => DropdownMenuItem(
+                          value: type,
+                          child: Text(type == TypeEvenement.soiree
+                              ? 'Soirée'
+                              : 'Mariage'),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedEvenement = value;
+                  });
+                },
+                validator: (value) => value == null
+                    ? 'Veuillez choisir un type d\'événement'
+                    : null,
               ),
               const SizedBox(height: 16),
 
@@ -276,6 +304,7 @@ class _VetementFormViewState extends State<VetementFormView> {
         final vetement = VetementsCompanion.insert(
           nom: _nomController.text,
           category: selectedCategory!,
+          evenement: selectedEvenement!,
           couleurs: _couleursController.text,
           prix: double.parse(_prixController.text),
           // caution: double.parse(_cautionController.text),

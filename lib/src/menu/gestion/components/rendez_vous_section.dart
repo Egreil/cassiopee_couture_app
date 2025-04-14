@@ -1,4 +1,5 @@
 import 'package:cassiopee_couture_app/src/menu/gestion/gestion_tasks_view.dart';
+import 'package:cassiopee_couture_app/src/vetements/vetements_grid_view.dart';
 import 'package:flutter/material.dart';
 import '../../../../database/database.dart';
 import 'package:drift/drift.dart' show ComparableExpr, innerJoin;
@@ -80,6 +81,17 @@ class _RendezVousSectionState extends State<RendezVousSection> {
                   ),
                   trailing: Text('${rdv.rendezVous.duree.inMinutes} min'),
                   isThreeLine: true,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VetementsGridView(
+                          database: widget.database,
+                          initialClient: rdv.client,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               );
             }).toList(),
