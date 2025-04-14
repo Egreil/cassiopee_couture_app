@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../database/tables.dart';
+import 'package:cassiopee_couture_app/src/theme/app_theme.dart';
 
 class AcompteFormView extends StatefulWidget {
   final AppDatabase database;
@@ -80,22 +81,36 @@ class _AcompteFormViewState extends State<AcompteFormView> {
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orange,
+                        backgroundColor: AppTheme.terracotta.withOpacity(0.7),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () => _finaliserReservation(false),
-                      child: const Text('En attente'),
+                      child: const Text(
+                        'En attente',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: AppTheme.terracotta,
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                       onPressed: () => _finaliserReservation(true),
-                      child: const Text('Valider l\'acompte'),
+                      child: const Text(
+                        'Valider l\'acompte',
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
                 ],
