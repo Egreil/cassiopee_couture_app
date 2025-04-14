@@ -275,6 +275,9 @@ class _ReservationFormViewState extends State<ReservationFormView> {
                     dateReservation: now,
                     dateSortie: _dateSortie,
                     dateRetour: Value(_dateRetourPrevue),
+                    type: TypeReservation.location, //_typeReservation,
+                    montantTotal: _prixTotal,
+                    statut: 'EC',
                   ),
                 );
 

@@ -1089,15 +1089,6 @@ class $ReservationsTable extends Reservations
       requiredDuringInsert: false,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
-  static const VerificationMeta _idVetementMeta =
-      const VerificationMeta('idVetement');
-  @override
-  late final GeneratedColumn<int> idVetement = GeneratedColumn<int>(
-      'id_vetement', aliasedName, false,
-      type: DriftSqlType.int,
-      requiredDuringInsert: true,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('REFERENCES vetements (id)'));
   static const VerificationMeta _idClientMeta =
       const VerificationMeta('idClient');
   @override
@@ -1107,6 +1098,32 @@ class $ReservationsTable extends Reservations
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('REFERENCES clients (id)'));
+  static const VerificationMeta _idVetementMeta =
+      const VerificationMeta('idVetement');
+  @override
+  late final GeneratedColumn<int> idVetement = GeneratedColumn<int>(
+      'id_vetement', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES vetements (id)'));
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumnWithTypeConverter<TypeReservation, String> type =
+      GeneratedColumn<String>('type', aliasedName, false,
+              type: DriftSqlType.string, requiredDuringInsert: true)
+          .withConverter<TypeReservation>($ReservationsTable.$convertertype);
+  static const VerificationMeta _montantTotalMeta =
+      const VerificationMeta('montantTotal');
+  @override
+  late final GeneratedColumn<double> montantTotal = GeneratedColumn<double>(
+      'montant_total', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+      'statut', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
   static const VerificationMeta _dateReservationMeta =
       const VerificationMeta('dateReservation');
   @override
@@ -1126,8 +1143,17 @@ class $ReservationsTable extends Reservations
       'date_retour', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, idVetement, idClient, dateReservation, dateSortie, dateRetour];
+  List<GeneratedColumn> get $columns => [
+        id,
+        idClient,
+        idVetement,
+        type,
+        montantTotal,
+        statut,
+        dateReservation,
+        dateSortie,
+        dateRetour
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1141,6 +1167,12 @@ class $ReservationsTable extends Reservations
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     }
+    if (data.containsKey('id_client')) {
+      context.handle(_idClientMeta,
+          idClient.isAcceptableOrUnknown(data['id_client']!, _idClientMeta));
+    } else if (isInserting) {
+      context.missing(_idClientMeta);
+    }
     if (data.containsKey('id_vetement')) {
       context.handle(
           _idVetementMeta,
@@ -1149,11 +1181,20 @@ class $ReservationsTable extends Reservations
     } else if (isInserting) {
       context.missing(_idVetementMeta);
     }
-    if (data.containsKey('id_client')) {
-      context.handle(_idClientMeta,
-          idClient.isAcceptableOrUnknown(data['id_client']!, _idClientMeta));
+    context.handle(_typeMeta, const VerificationResult.success());
+    if (data.containsKey('montant_total')) {
+      context.handle(
+          _montantTotalMeta,
+          montantTotal.isAcceptableOrUnknown(
+              data['montant_total']!, _montantTotalMeta));
     } else if (isInserting) {
-      context.missing(_idClientMeta);
+      context.missing(_montantTotalMeta);
+    }
+    if (data.containsKey('statut')) {
+      context.handle(_statutMeta,
+          statut.isAcceptableOrUnknown(data['statut']!, _statutMeta));
+    } else if (isInserting) {
+      context.missing(_statutMeta);
     }
     if (data.containsKey('date_reservation')) {
       context.handle(
@@ -1188,10 +1229,17 @@ class $ReservationsTable extends Reservations
     return Reservation(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
-      idVetement: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id_vetement'])!,
       idClient: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id_client'])!,
+      idVetement: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_vetement'])!,
+      type: $ReservationsTable.$convertertype.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!),
+      montantTotal: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}montant_total'])!,
+      statut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}statut'])!,
       dateReservation: attachedDatabase.typeMapping.read(
           DriftSqlType.dateTime, data['${effectivePrefix}date_reservation'])!,
       dateSortie: attachedDatabase.typeMapping
@@ -1205,19 +1253,28 @@ class $ReservationsTable extends Reservations
   $ReservationsTable createAlias(String alias) {
     return $ReservationsTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<TypeReservation, String, String> $convertertype =
+      const EnumNameConverter<TypeReservation>(TypeReservation.values);
 }
 
 class Reservation extends DataClass implements Insertable<Reservation> {
   final int id;
-  final int idVetement;
   final int idClient;
+  final int idVetement;
+  final TypeReservation type;
+  final double montantTotal;
+  final String statut;
   final DateTime dateReservation;
   final DateTime dateSortie;
   final DateTime? dateRetour;
   const Reservation(
       {required this.id,
-      required this.idVetement,
       required this.idClient,
+      required this.idVetement,
+      required this.type,
+      required this.montantTotal,
+      required this.statut,
       required this.dateReservation,
       required this.dateSortie,
       this.dateRetour});
@@ -1225,8 +1282,14 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
-    map['id_vetement'] = Variable<int>(idVetement);
     map['id_client'] = Variable<int>(idClient);
+    map['id_vetement'] = Variable<int>(idVetement);
+    {
+      map['type'] =
+          Variable<String>($ReservationsTable.$convertertype.toSql(type));
+    }
+    map['montant_total'] = Variable<double>(montantTotal);
+    map['statut'] = Variable<String>(statut);
     map['date_reservation'] = Variable<DateTime>(dateReservation);
     map['date_sortie'] = Variable<DateTime>(dateSortie);
     if (!nullToAbsent || dateRetour != null) {
@@ -1238,8 +1301,11 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   ReservationsCompanion toCompanion(bool nullToAbsent) {
     return ReservationsCompanion(
       id: Value(id),
-      idVetement: Value(idVetement),
       idClient: Value(idClient),
+      idVetement: Value(idVetement),
+      type: Value(type),
+      montantTotal: Value(montantTotal),
+      statut: Value(statut),
       dateReservation: Value(dateReservation),
       dateSortie: Value(dateSortie),
       dateRetour: dateRetour == null && nullToAbsent
@@ -1253,8 +1319,12 @@ class Reservation extends DataClass implements Insertable<Reservation> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Reservation(
       id: serializer.fromJson<int>(json['id']),
-      idVetement: serializer.fromJson<int>(json['idVetement']),
       idClient: serializer.fromJson<int>(json['idClient']),
+      idVetement: serializer.fromJson<int>(json['idVetement']),
+      type: $ReservationsTable.$convertertype
+          .fromJson(serializer.fromJson<String>(json['type'])),
+      montantTotal: serializer.fromJson<double>(json['montantTotal']),
+      statut: serializer.fromJson<String>(json['statut']),
       dateReservation: serializer.fromJson<DateTime>(json['dateReservation']),
       dateSortie: serializer.fromJson<DateTime>(json['dateSortie']),
       dateRetour: serializer.fromJson<DateTime?>(json['dateRetour']),
@@ -1265,8 +1335,12 @@ class Reservation extends DataClass implements Insertable<Reservation> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
-      'idVetement': serializer.toJson<int>(idVetement),
       'idClient': serializer.toJson<int>(idClient),
+      'idVetement': serializer.toJson<int>(idVetement),
+      'type': serializer
+          .toJson<String>($ReservationsTable.$convertertype.toJson(type)),
+      'montantTotal': serializer.toJson<double>(montantTotal),
+      'statut': serializer.toJson<String>(statut),
       'dateReservation': serializer.toJson<DateTime>(dateReservation),
       'dateSortie': serializer.toJson<DateTime>(dateSortie),
       'dateRetour': serializer.toJson<DateTime?>(dateRetour),
@@ -1275,15 +1349,21 @@ class Reservation extends DataClass implements Insertable<Reservation> {
 
   Reservation copyWith(
           {int? id,
-          int? idVetement,
           int? idClient,
+          int? idVetement,
+          TypeReservation? type,
+          double? montantTotal,
+          String? statut,
           DateTime? dateReservation,
           DateTime? dateSortie,
           Value<DateTime?> dateRetour = const Value.absent()}) =>
       Reservation(
         id: id ?? this.id,
-        idVetement: idVetement ?? this.idVetement,
         idClient: idClient ?? this.idClient,
+        idVetement: idVetement ?? this.idVetement,
+        type: type ?? this.type,
+        montantTotal: montantTotal ?? this.montantTotal,
+        statut: statut ?? this.statut,
         dateReservation: dateReservation ?? this.dateReservation,
         dateSortie: dateSortie ?? this.dateSortie,
         dateRetour: dateRetour.present ? dateRetour.value : this.dateRetour,
@@ -1291,9 +1371,14 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   Reservation copyWithCompanion(ReservationsCompanion data) {
     return Reservation(
       id: data.id.present ? data.id.value : this.id,
+      idClient: data.idClient.present ? data.idClient.value : this.idClient,
       idVetement:
           data.idVetement.present ? data.idVetement.value : this.idVetement,
-      idClient: data.idClient.present ? data.idClient.value : this.idClient,
+      type: data.type.present ? data.type.value : this.type,
+      montantTotal: data.montantTotal.present
+          ? data.montantTotal.value
+          : this.montantTotal,
+      statut: data.statut.present ? data.statut.value : this.statut,
       dateReservation: data.dateReservation.present
           ? data.dateReservation.value
           : this.dateReservation,
@@ -1308,8 +1393,11 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   String toString() {
     return (StringBuffer('Reservation(')
           ..write('id: $id, ')
-          ..write('idVetement: $idVetement, ')
           ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement, ')
+          ..write('type: $type, ')
+          ..write('montantTotal: $montantTotal, ')
+          ..write('statut: $statut, ')
           ..write('dateReservation: $dateReservation, ')
           ..write('dateSortie: $dateSortie, ')
           ..write('dateRetour: $dateRetour')
@@ -1318,15 +1406,18 @@ class Reservation extends DataClass implements Insertable<Reservation> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, idVetement, idClient, dateReservation, dateSortie, dateRetour);
+  int get hashCode => Object.hash(id, idClient, idVetement, type, montantTotal,
+      statut, dateReservation, dateSortie, dateRetour);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Reservation &&
           other.id == this.id &&
-          other.idVetement == this.idVetement &&
           other.idClient == this.idClient &&
+          other.idVetement == this.idVetement &&
+          other.type == this.type &&
+          other.montantTotal == this.montantTotal &&
+          other.statut == this.statut &&
           other.dateReservation == this.dateReservation &&
           other.dateSortie == this.dateSortie &&
           other.dateRetour == this.dateRetour);
@@ -1334,42 +1425,60 @@ class Reservation extends DataClass implements Insertable<Reservation> {
 
 class ReservationsCompanion extends UpdateCompanion<Reservation> {
   final Value<int> id;
-  final Value<int> idVetement;
   final Value<int> idClient;
+  final Value<int> idVetement;
+  final Value<TypeReservation> type;
+  final Value<double> montantTotal;
+  final Value<String> statut;
   final Value<DateTime> dateReservation;
   final Value<DateTime> dateSortie;
   final Value<DateTime?> dateRetour;
   const ReservationsCompanion({
     this.id = const Value.absent(),
-    this.idVetement = const Value.absent(),
     this.idClient = const Value.absent(),
+    this.idVetement = const Value.absent(),
+    this.type = const Value.absent(),
+    this.montantTotal = const Value.absent(),
+    this.statut = const Value.absent(),
     this.dateReservation = const Value.absent(),
     this.dateSortie = const Value.absent(),
     this.dateRetour = const Value.absent(),
   });
   ReservationsCompanion.insert({
     this.id = const Value.absent(),
-    required int idVetement,
     required int idClient,
+    required int idVetement,
+    required TypeReservation type,
+    required double montantTotal,
+    required String statut,
     required DateTime dateReservation,
     required DateTime dateSortie,
     this.dateRetour = const Value.absent(),
-  })  : idVetement = Value(idVetement),
-        idClient = Value(idClient),
+  })  : idClient = Value(idClient),
+        idVetement = Value(idVetement),
+        type = Value(type),
+        montantTotal = Value(montantTotal),
+        statut = Value(statut),
         dateReservation = Value(dateReservation),
         dateSortie = Value(dateSortie);
   static Insertable<Reservation> custom({
     Expression<int>? id,
-    Expression<int>? idVetement,
     Expression<int>? idClient,
+    Expression<int>? idVetement,
+    Expression<String>? type,
+    Expression<double>? montantTotal,
+    Expression<String>? statut,
     Expression<DateTime>? dateReservation,
     Expression<DateTime>? dateSortie,
     Expression<DateTime>? dateRetour,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
-      if (idVetement != null) 'id_vetement': idVetement,
       if (idClient != null) 'id_client': idClient,
+      if (idVetement != null) 'id_vetement': idVetement,
+      if (type != null) 'type': type,
+      if (montantTotal != null) 'montant_total': montantTotal,
+      if (statut != null) 'statut': statut,
       if (dateReservation != null) 'date_reservation': dateReservation,
       if (dateSortie != null) 'date_sortie': dateSortie,
       if (dateRetour != null) 'date_retour': dateRetour,
@@ -1378,15 +1487,21 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
 
   ReservationsCompanion copyWith(
       {Value<int>? id,
-      Value<int>? idVetement,
       Value<int>? idClient,
+      Value<int>? idVetement,
+      Value<TypeReservation>? type,
+      Value<double>? montantTotal,
+      Value<String>? statut,
       Value<DateTime>? dateReservation,
       Value<DateTime>? dateSortie,
       Value<DateTime?>? dateRetour}) {
     return ReservationsCompanion(
       id: id ?? this.id,
-      idVetement: idVetement ?? this.idVetement,
       idClient: idClient ?? this.idClient,
+      idVetement: idVetement ?? this.idVetement,
+      type: type ?? this.type,
+      montantTotal: montantTotal ?? this.montantTotal,
+      statut: statut ?? this.statut,
       dateReservation: dateReservation ?? this.dateReservation,
       dateSortie: dateSortie ?? this.dateSortie,
       dateRetour: dateRetour ?? this.dateRetour,
@@ -1399,11 +1514,21 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
     if (id.present) {
       map['id'] = Variable<int>(id.value);
     }
+    if (idClient.present) {
+      map['id_client'] = Variable<int>(idClient.value);
+    }
     if (idVetement.present) {
       map['id_vetement'] = Variable<int>(idVetement.value);
     }
-    if (idClient.present) {
-      map['id_client'] = Variable<int>(idClient.value);
+    if (type.present) {
+      map['type'] =
+          Variable<String>($ReservationsTable.$convertertype.toSql(type.value));
+    }
+    if (montantTotal.present) {
+      map['montant_total'] = Variable<double>(montantTotal.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
     }
     if (dateReservation.present) {
       map['date_reservation'] = Variable<DateTime>(dateReservation.value);
@@ -1421,8 +1546,11 @@ class ReservationsCompanion extends UpdateCompanion<Reservation> {
   String toString() {
     return (StringBuffer('ReservationsCompanion(')
           ..write('id: $id, ')
-          ..write('idVetement: $idVetement, ')
           ..write('idClient: $idClient, ')
+          ..write('idVetement: $idVetement, ')
+          ..write('type: $type, ')
+          ..write('montantTotal: $montantTotal, ')
+          ..write('statut: $statut, ')
           ..write('dateReservation: $dateReservation, ')
           ..write('dateSortie: $dateSortie, ')
           ..write('dateRetour: $dateRetour')
@@ -3804,8 +3932,11 @@ typedef $$ClientsTableProcessedTableManager = ProcessedTableManager<
 typedef $$ReservationsTableCreateCompanionBuilder = ReservationsCompanion
     Function({
   Value<int> id,
-  required int idVetement,
   required int idClient,
+  required int idVetement,
+  required TypeReservation type,
+  required double montantTotal,
+  required String statut,
   required DateTime dateReservation,
   required DateTime dateSortie,
   Value<DateTime?> dateRetour,
@@ -3813,8 +3944,11 @@ typedef $$ReservationsTableCreateCompanionBuilder = ReservationsCompanion
 typedef $$ReservationsTableUpdateCompanionBuilder = ReservationsCompanion
     Function({
   Value<int> id,
-  Value<int> idVetement,
   Value<int> idClient,
+  Value<int> idVetement,
+  Value<TypeReservation> type,
+  Value<double> montantTotal,
+  Value<String> statut,
   Value<DateTime> dateReservation,
   Value<DateTime> dateSortie,
   Value<DateTime?> dateRetour,
@@ -3823,21 +3957,6 @@ typedef $$ReservationsTableUpdateCompanionBuilder = ReservationsCompanion
 final class $$ReservationsTableReferences
     extends BaseReferences<_$AppDatabase, $ReservationsTable, Reservation> {
   $$ReservationsTableReferences(super.$_db, super.$_table, super.$_typedResult);
-
-  static $VetementsTable _idVetementTable(_$AppDatabase db) =>
-      db.vetements.createAlias(
-          $_aliasNameGenerator(db.reservations.idVetement, db.vetements.id));
-
-  $$VetementsTableProcessedTableManager get idVetement {
-    final $_column = $_itemColumn<int>('id_vetement')!;
-
-    final manager = $$VetementsTableTableManager($_db, $_db.vetements)
-        .filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_idVetementTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-        manager.$state.copyWith(prefetchedData: [item]));
-  }
 
   static $ClientsTable _idClientTable(_$AppDatabase db) =>
       db.clients.createAlias(
@@ -3849,6 +3968,21 @@ final class $$ReservationsTableReferences
     final manager = $$ClientsTableTableManager($_db, $_db.clients)
         .filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_idClientTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $VetementsTable _idVetementTable(_$AppDatabase db) =>
+      db.vetements.createAlias(
+          $_aliasNameGenerator(db.reservations.idVetement, db.vetements.id));
+
+  $$VetementsTableProcessedTableManager get idVetement {
+    final $_column = $_itemColumn<int>('id_vetement')!;
+
+    final manager = $$VetementsTableTableManager($_db, $_db.vetements)
+        .filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_idVetementTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
         manager.$state.copyWith(prefetchedData: [item]));
@@ -3897,6 +4031,17 @@ class $$ReservationsTableFilterComposer
   ColumnFilters<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnFilters(column));
 
+  ColumnWithTypeConverterFilters<TypeReservation, TypeReservation, String>
+      get type => $composableBuilder(
+          column: $table.type,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<double> get montantTotal => $composableBuilder(
+      column: $table.montantTotal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation,
       builder: (column) => ColumnFilters(column));
@@ -3906,26 +4051,6 @@ class $$ReservationsTableFilterComposer
 
   ColumnFilters<DateTime> get dateRetour => $composableBuilder(
       column: $table.dateRetour, builder: (column) => ColumnFilters(column));
-
-  $$VetementsTableFilterComposer get idVetement {
-    final $$VetementsTableFilterComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.idVetement,
-        referencedTable: $db.vetements,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$VetementsTableFilterComposer(
-              $db: $db,
-              $table: $db.vetements,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 
   $$ClientsTableFilterComposer get idClient {
     final $$ClientsTableFilterComposer composer = $composerBuilder(
@@ -3939,6 +4064,26 @@ class $$ReservationsTableFilterComposer
             $$ClientsTableFilterComposer(
               $db: $db,
               $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableFilterComposer get idVetement {
+    final $$VetementsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableFilterComposer(
+              $db: $db,
+              $table: $db.vetements,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -4002,6 +4147,16 @@ class $$ReservationsTableOrderingComposer
   ColumnOrderings<int> get id => $composableBuilder(
       column: $table.id, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get montantTotal => $composableBuilder(
+      column: $table.montantTotal,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation,
       builder: (column) => ColumnOrderings(column));
@@ -4011,26 +4166,6 @@ class $$ReservationsTableOrderingComposer
 
   ColumnOrderings<DateTime> get dateRetour => $composableBuilder(
       column: $table.dateRetour, builder: (column) => ColumnOrderings(column));
-
-  $$VetementsTableOrderingComposer get idVetement {
-    final $$VetementsTableOrderingComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.idVetement,
-        referencedTable: $db.vetements,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$VetementsTableOrderingComposer(
-              $db: $db,
-              $table: $db.vetements,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 
   $$ClientsTableOrderingComposer get idClient {
     final $$ClientsTableOrderingComposer composer = $composerBuilder(
@@ -4044,6 +4179,26 @@ class $$ReservationsTableOrderingComposer
             $$ClientsTableOrderingComposer(
               $db: $db,
               $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableOrderingComposer get idVetement {
+    final $$VetementsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableOrderingComposer(
+              $db: $db,
+              $table: $db.vetements,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -4065,6 +4220,15 @@ class $$ReservationsTableAnnotationComposer
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
 
+  GeneratedColumnWithTypeConverter<TypeReservation, String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<double> get montantTotal => $composableBuilder(
+      column: $table.montantTotal, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
   GeneratedColumn<DateTime> get dateReservation => $composableBuilder(
       column: $table.dateReservation, builder: (column) => column);
 
@@ -4073,26 +4237,6 @@ class $$ReservationsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get dateRetour => $composableBuilder(
       column: $table.dateRetour, builder: (column) => column);
-
-  $$VetementsTableAnnotationComposer get idVetement {
-    final $$VetementsTableAnnotationComposer composer = $composerBuilder(
-        composer: this,
-        getCurrentColumn: (t) => t.idVetement,
-        referencedTable: $db.vetements,
-        getReferencedColumn: (t) => t.id,
-        builder: (joinBuilder,
-                {$addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer}) =>
-            $$VetementsTableAnnotationComposer(
-              $db: $db,
-              $table: $db.vetements,
-              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-              joinBuilder: joinBuilder,
-              $removeJoinBuilderFromRootComposer:
-                  $removeJoinBuilderFromRootComposer,
-            ));
-    return composer;
-  }
 
   $$ClientsTableAnnotationComposer get idClient {
     final $$ClientsTableAnnotationComposer composer = $composerBuilder(
@@ -4106,6 +4250,26 @@ class $$ReservationsTableAnnotationComposer
             $$ClientsTableAnnotationComposer(
               $db: $db,
               $table: $db.clients,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$VetementsTableAnnotationComposer get idVetement {
+    final $$VetementsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idVetement,
+        referencedTable: $db.vetements,
+        getReferencedColumn: (t) => t.id,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$VetementsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.vetements,
               $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
               joinBuilder: joinBuilder,
               $removeJoinBuilderFromRootComposer:
@@ -4169,8 +4333,8 @@ class $$ReservationsTableTableManager extends RootTableManager<
     (Reservation, $$ReservationsTableReferences),
     Reservation,
     PrefetchHooks Function(
-        {bool idVetement,
-        bool idClient,
+        {bool idClient,
+        bool idVetement,
         bool cautionsRefs,
         bool acomptesRefs})> {
   $$ReservationsTableTableManager(_$AppDatabase db, $ReservationsTable table)
@@ -4185,32 +4349,44 @@ class $$ReservationsTableTableManager extends RootTableManager<
               $$ReservationsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            Value<int> idVetement = const Value.absent(),
             Value<int> idClient = const Value.absent(),
+            Value<int> idVetement = const Value.absent(),
+            Value<TypeReservation> type = const Value.absent(),
+            Value<double> montantTotal = const Value.absent(),
+            Value<String> statut = const Value.absent(),
             Value<DateTime> dateReservation = const Value.absent(),
             Value<DateTime> dateSortie = const Value.absent(),
             Value<DateTime?> dateRetour = const Value.absent(),
           }) =>
               ReservationsCompanion(
             id: id,
-            idVetement: idVetement,
             idClient: idClient,
+            idVetement: idVetement,
+            type: type,
+            montantTotal: montantTotal,
+            statut: statut,
             dateReservation: dateReservation,
             dateSortie: dateSortie,
             dateRetour: dateRetour,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
-            required int idVetement,
             required int idClient,
+            required int idVetement,
+            required TypeReservation type,
+            required double montantTotal,
+            required String statut,
             required DateTime dateReservation,
             required DateTime dateSortie,
             Value<DateTime?> dateRetour = const Value.absent(),
           }) =>
               ReservationsCompanion.insert(
             id: id,
-            idVetement: idVetement,
             idClient: idClient,
+            idVetement: idVetement,
+            type: type,
+            montantTotal: montantTotal,
+            statut: statut,
             dateReservation: dateReservation,
             dateSortie: dateSortie,
             dateRetour: dateRetour,
@@ -4222,8 +4398,8 @@ class $$ReservationsTableTableManager extends RootTableManager<
                   ))
               .toList(),
           prefetchHooksCallback: (
-              {idVetement = false,
-              idClient = false,
+              {idClient = false,
+              idVetement = false,
               cautionsRefs = false,
               acomptesRefs = false}) {
             return PrefetchHooks(
@@ -4245,16 +4421,6 @@ class $$ReservationsTableTableManager extends RootTableManager<
                       dynamic,
                       dynamic,
                       dynamic>>(state) {
-                if (idVetement) {
-                  state = state.withJoin(
-                    currentTable: table,
-                    currentColumn: table.idVetement,
-                    referencedTable:
-                        $$ReservationsTableReferences._idVetementTable(db),
-                    referencedColumn:
-                        $$ReservationsTableReferences._idVetementTable(db).id,
-                  ) as T;
-                }
                 if (idClient) {
                   state = state.withJoin(
                     currentTable: table,
@@ -4263,6 +4429,16 @@ class $$ReservationsTableTableManager extends RootTableManager<
                         $$ReservationsTableReferences._idClientTable(db),
                     referencedColumn:
                         $$ReservationsTableReferences._idClientTable(db).id,
+                  ) as T;
+                }
+                if (idVetement) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idVetement,
+                    referencedTable:
+                        $$ReservationsTableReferences._idVetementTable(db),
+                    referencedColumn:
+                        $$ReservationsTableReferences._idVetementTable(db).id,
                   ) as T;
                 }
 
@@ -4313,8 +4489,8 @@ typedef $$ReservationsTableProcessedTableManager = ProcessedTableManager<
     (Reservation, $$ReservationsTableReferences),
     Reservation,
     PrefetchHooks Function(
-        {bool idVetement,
-        bool idClient,
+        {bool idClient,
+        bool idVetement,
         bool cautionsRefs,
         bool acomptesRefs})>;
 typedef $$CautionsTableCreateCompanionBuilder = CautionsCompanion Function({

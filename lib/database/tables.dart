@@ -1,3 +1,4 @@
+import 'package:cassiopee_couture_app/database/database.dart';
 import 'package:drift/drift.dart';
 
 class DurationConverter extends TypeConverter<Duration, int> {
@@ -39,15 +40,22 @@ class Photos extends Table {
   TextColumn get url => text()();
 }
 
+enum TypeReservation {
+  achat,
+  location,
+}
+
 class Reservations extends Table {
   IntColumn get id => integer().autoIncrement()();
-  IntColumn get idVetement => integer().references(Vetements, #id)();
   IntColumn get idClient => integer().references(Clients, #id)();
-  DateTimeColumn get dateReservation =>
-      dateTime()(); // date de création de la réservation
-  DateTimeColumn get dateSortie => dateTime()(); // date de sortie du vetement
+  IntColumn get idVetement => integer().references(Vetements, #id)();
+  TextColumn get type => textEnum<TypeReservation>()();
+  RealColumn get montantTotal => real()();
+  TextColumn get statut => text()(); // 'EC' (en cours), 'R' (rendu)
+  DateTimeColumn get dateReservation => dateTime()(); // date de création
+  DateTimeColumn get dateSortie => dateTime()(); // date de sortie prévue
   DateTimeColumn get dateRetour =>
-      dateTime().nullable()(); //date de retour du vetement
+      dateTime().nullable()(); // date de retour prévue
 }
 
 class Cautions extends Table {

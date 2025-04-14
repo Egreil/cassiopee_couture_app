@@ -61,6 +61,22 @@ class AppDatabase extends _$AppDatabase {
       await delete(clients).go();
     });
   }
+
+  Future<int> addReservation(ReservationsCompanion reservation) async {
+    if (reservation.type.value == TypeReservation.location &&
+        !await _hasCaution(reservation.id.value)) {
+      throw Exception(
+          'Une réservation de type location doit avoir une caution');
+    }
+    return into(reservations).insert(reservation);
+  }
+
+  Future<bool> _hasCaution(int reservationId) async {
+    final count = await (select(cautions)
+          ..where((c) => c.idReservation.equals(reservationId)))
+        .get();
+    return count.isNotEmpty;
+  }
 }
 
 LazyDatabase _openConnection() {

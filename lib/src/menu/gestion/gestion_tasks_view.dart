@@ -219,19 +219,21 @@ class RendezVousWithClient {
   });
 }
 
-class CautionWithClientAndReservation {
+class CautionWithClientAndVetement {
   final int id;
   final double montant;
   final DateTime dateReception;
   final Client client;
-  final int idReservation;
+  final Vetement vetement;
+  final String statut;
 
-  CautionWithClientAndReservation({
+  const CautionWithClientAndVetement({
     required this.id,
     required this.montant,
     required this.dateReception,
     required this.client,
-    required this.idReservation,
+    required this.vetement,
+    required this.statut,
   });
 }
 
@@ -264,6 +266,22 @@ class AcompteWithClientAndVetement {
     required this.client,
     required this.vetement,
     required this.paye,
+  });
+}
+
+class CautionWithClientAndReservation {
+  final int id;
+  final double montant;
+  final DateTime dateReception;
+  final Client client;
+  final int idReservation;
+
+  const CautionWithClientAndReservation({
+    required this.id,
+    required this.montant,
+    required this.dateReception,
+    required this.client,
+    required this.idReservation,
   });
 }
 

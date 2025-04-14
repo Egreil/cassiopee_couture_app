@@ -26,33 +26,35 @@ class DatabaseSeeder {
   Future<void> seedDatabase() async {
     final today = DateTime.now();
     // Clients
-    final clients = [
-      ClientsCompanion.insert(
-        nom: 'Dubois',
-        prenom: 'Emma',
-        adresse: '12 rue des Lilas, 75020 Paris',
-        numero: '0612345678',
-        mail: const Value('emma.dubois@email.com'),
-      ),
-      ClientsCompanion.insert(
-        nom: 'Bernard',
-        prenom: 'Sophie',
-        adresse: '45 avenue Foch, 75016 Paris',
-        numero: '0623456789',
-        mail: const Value('sophie.bernard@email.com'),
-      ),
-      ClientsCompanion.insert(
-        nom: 'Petit',
-        prenom: 'Marie',
-        adresse: '8 rue du Commerce, 75015 Paris',
-        numero: '0634567890',
-        mail: const Value('marie.petit@email.com'),
-      ),
-    ];
-
-    for (final client in clients) {
-      await db.into(db.clients).insert(client);
-    }
+    final clientsIds = await Future.wait([
+      db.into(db.clients).insertReturning(
+            ClientsCompanion.insert(
+              nom: 'Dubois',
+              prenom: 'Emma',
+              adresse: '12 rue des Lilas, 75020 Paris',
+              numero: '0612345678',
+              mail: const Value('emma.dubois@email.com'),
+            ),
+          ),
+      db.into(db.clients).insertReturning(
+            ClientsCompanion.insert(
+              nom: 'Bernard',
+              prenom: 'Sophie',
+              adresse: '45 avenue Foch, 75016 Paris',
+              numero: '0623456789',
+              mail: const Value('sophie.bernard@email.com'),
+            ),
+          ),
+      db.into(db.clients).insertReturning(
+            ClientsCompanion.insert(
+              nom: 'Petit',
+              prenom: 'Marie',
+              adresse: '8 rue du Commerce, 75015 Paris',
+              numero: '0634567890',
+              mail: const Value('marie.petit@email.com'),
+            ),
+          ),
+    ]);
 
     // Vêtements
     final vetements = [
@@ -75,7 +77,7 @@ class DatabaseSeeder {
         longueurTotale: 65,
         prix: 120.0,
         tourTaille: const Value(65),
-        tourPoitrine: const Value(null),
+        tourPoitrine: const Value(100),
         commentaire: const Value('Jupe mi-longue plissée'),
       ),
       VetementsCompanion.insert(
@@ -85,7 +87,7 @@ class DatabaseSeeder {
         evenement: TypeEvenement.soiree,
         longueurTotale: 45,
         prix: 85.0,
-        tourTaille: const Value(null),
+        tourTaille: const Value(100),
         tourPoitrine: const Value(88),
         commentaire: const Value('Top en dentelle fine'),
       ),
@@ -136,81 +138,168 @@ class DatabaseSeeder {
           ),
         );
 
-    // Réservations pour les cautions
+    // Réservations avec différents statuts
     await db.batch((batch) {
-      // Réservation 1 (pour caution à rendre)
+      // 1. Réservation expirée
       batch.insert(
         db.reservations,
         ReservationsCompanion.insert(
           idClient: 1,
           idVetement: 1,
-          dateReservation: DateTime(today.year, today.month, today.day - 16),
-          dateSortie: DateTime(today.year, today.month, today.day - 15),
-          dateRetour: Value(DateTime(today.year, today.month, today.day + 1)),
+          type: TypeReservation.location,
+          montantTotal: 150.0,
+          statut: 'R', // Rendu
+          dateReservation: DateTime(
+              today.year, today.month, today.day - 30), // Créée il y a 30 jours
+          dateSortie: DateTime(today.year, today.month, today.day - 25),
+          dateRetour: Value(DateTime(today.year, today.month, today.day - 20)),
         ),
       );
 
-      // Réservation 2 (pour caution en attente)
+      // 2. Réservation en cours
       batch.insert(
-          db.reservations,
-          ReservationsCompanion.insert(
-            idClient: 2,
-            idVetement: 2,
-            dateReservation: DateTime(today.year, today.month, today.day),
-            dateSortie: DateTime(
-                today.year, today.month, today.day + 1), // Sortie demain
-            dateRetour: Value(DateTime(today.year, today.month, today.day + 7)),
-          ));
+        db.reservations,
+        ReservationsCompanion.insert(
+          idClient: 2,
+          idVetement: 2,
+          type: TypeReservation.location,
+          montantTotal: 200.0,
+          statut: 'EC', // En cours
+          dateReservation: DateTime(
+              today.year, today.month, today.day - 5), // Créée il y a 5 jours
+          dateSortie: DateTime(today.year, today.month, today.day - 2),
+          dateRetour: Value(DateTime(today.year, today.month, today.day + 3)),
+        ),
+      );
 
-      // Réservation 3 (pour caution en attente)
+      // 3. Réservation future avec caution et acompte
       batch.insert(
         db.reservations,
         ReservationsCompanion.insert(
           idClient: 3,
           idVetement: 3,
-          dateReservation: DateTime(today.year, today.month, today.day),
-          dateSortie: DateTime(
-              today.year, today.month, today.day + 2), // Sortie après-demain
-          dateRetour: Value(DateTime(today.year, today.month, today.day + 9)),
+          type: TypeReservation.location,
+          montantTotal: 250.0,
+          statut: 'EC',
+          dateReservation: today, // Créée aujourd'hui
+          dateSortie: DateTime(today.year, today.month, today.day + 2),
+          dateRetour: Value(DateTime(today.year, today.month, today.day + 7)),
         ),
       );
     });
 
-    // Cautions liées aux réservations
+    // Ajouter caution et acompte pour la réservation future
     await db.batch((batch) {
-      // Caution à rendre (AR)
       batch.insert(
         db.cautions,
         CautionsCompanion.insert(
-          montant: 150.0,
-          dateReception: DateTime(today.year, today.month, today.day - 10),
-          statut: CautionStatus.AR,
-          idReservation: 1,
-        ),
-      );
-
-      // Caution en attente (EA)
-      batch.insert(
-        db.cautions,
-        CautionsCompanion.insert(
-          montant: 200.0,
-          dateReception: DateTime(today.year, today.month, today.day - 5),
-          statut: CautionStatus.EA,
-          idReservation: 2,
-        ),
-      );
-
-      // Une autre caution en attente (EA)
-      batch.insert(
-        db.cautions,
-        CautionsCompanion.insert(
-          montant: 175.0,
-          dateReception: DateTime(today.year, today.month, today.day - 3),
-          statut: CautionStatus.EA,
           idReservation: 3,
+          montant: 500.0,
+          dateReception: DateTime(today.year, today.month, today.day),
+          statut: CautionStatus.EA,
+        ),
+      );
+
+      batch.insert(
+        db.acomptes,
+        AcomptesCompanion.insert(
+          idReservation: 3,
+          montant: 75.0, // 30% du montant total
+          paye: 1,
+          datePaiement: DateTime(today.year, today.month, today.day),
         ),
       );
     });
+
+    // 3 Rendez-vous aujourd'hui
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clientsIds[0].id,
+          date: DateTime(today.year, today.month, today.day),
+          heure: '09:00',
+          duree: const Duration(minutes: 30),
+          motif: MotifRendezVous.consultation,
+        ));
+
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clientsIds[1].id,
+          date: today.add(const Duration(hours: 14)),
+          heure: '14:00',
+          duree: const Duration(minutes: 45),
+          motif: MotifRendezVous.essayage,
+        ));
+
+    await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
+          idClient: clientsIds[2].id,
+          date: today.add(const Duration(hours: 16)),
+          heure: '16:00',
+          duree: const Duration(minutes: 30),
+          motif: MotifRendezVous.retour,
+        ));
+
+    // 3 Départs prévus
+    final depart1 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 4,
+            idClient: clientsIds[0].id,
+            type: TypeReservation.location,
+            montantTotal: 250.0,
+            statut: 'EC',
+            dateReservation: today
+                .subtract(const Duration(days: 2)), // Réservé il y a 2 jours
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 5))),
+          ),
+        );
+
+    final depart2 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 5,
+            idClient: clientsIds[1].id,
+            type: TypeReservation.location,
+            montantTotal: 120.0,
+            statut: 'EC',
+            dateReservation: today
+                .subtract(const Duration(days: 3)), // Réservé il y a 3 jours
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 7))),
+          ),
+        );
+
+    final depart3 = await db.into(db.reservations).insertReturning(
+          ReservationsCompanion.insert(
+            idVetement: 6,
+            idClient: clientsIds[2].id,
+            type: TypeReservation.location,
+            montantTotal: 85.0,
+            statut: 'EC',
+            dateReservation:
+                today.subtract(const Duration(days: 1)), // Réservé hier
+            dateSortie: today,
+            dateRetour: Value(today.add(const Duration(days: 6))),
+          ),
+        );
+
+    // 3 Paiements à recevoir (utilisant les IDs des réservations de départ)
+    await db.into(db.acomptes).insert(AcomptesCompanion.insert(
+          idReservation: depart1.id,
+          montant: 250.0, // Prix complet du vêtement
+          paye: 0,
+          datePaiement: today,
+        ));
+
+    await db.into(db.acomptes).insert(AcomptesCompanion.insert(
+          idReservation: depart2.id,
+          montant: 120.0, // Prix complet du vêtement
+          paye: 0,
+          datePaiement: today,
+        ));
+
+    await db.into(db.acomptes).insert(AcomptesCompanion.insert(
+          idReservation: depart3.id,
+          montant: 85.0, // Prix complet du vêtement
+          paye: 0,
+          datePaiement: today,
+        ));
   }
 
   Future<void> seedTodayTasks() async {
@@ -229,11 +318,15 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 1,
             idClient: clients[0].id,
+            type: TypeReservation.location,
+            montantTotal: 250.0,
+            statut: 'EC',
             dateReservation:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 5),
             dateSortie:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 2),
-            dateRetour: Value(startOfDay),
+            dateRetour: Value(DateTime(
+                startOfDay.year, startOfDay.month, startOfDay.day - 1)),
           ),
         );
 
@@ -241,11 +334,15 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 2,
             idClient: clients[1].id,
+            type: TypeReservation.location,
+            montantTotal: 120.0,
+            statut: 'EC',
             dateReservation:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 4),
             dateSortie:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 1),
-            dateRetour: Value(startOfDay),
+            dateRetour: Value(DateTime(
+                startOfDay.year, startOfDay.month, startOfDay.day - 1)),
           ),
         );
 
@@ -253,11 +350,15 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 3,
             idClient: clients[2].id,
+            type: TypeReservation.location,
+            montantTotal: 85.0,
+            statut: 'EC',
             dateReservation:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 3),
             dateSortie:
                 DateTime(startOfDay.year, startOfDay.month, startOfDay.day - 1),
-            dateRetour: Value(startOfDay),
+            dateRetour: Value(DateTime(
+                startOfDay.year, startOfDay.month, startOfDay.day - 1)),
           ),
         );
 
@@ -310,15 +411,15 @@ class DatabaseSeeder {
 
     // 3 Rendez-vous aujourd'hui
     await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clients[0].id, // Emma Dubois
-          date: DateTime(today.year, today.month, today.day), // Juste la date
+          idClient: clients[0].id,
+          date: DateTime(today.year, today.month, today.day),
           heure: '09:00',
           duree: const Duration(minutes: 30),
           motif: MotifRendezVous.consultation,
         ));
 
     await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clients[1].id, // Sophie Bernard
+          idClient: clients[1].id,
           date: today.add(const Duration(hours: 14)),
           heure: '14:00',
           duree: const Duration(minutes: 45),
@@ -326,7 +427,7 @@ class DatabaseSeeder {
         ));
 
     await db.into(db.rendezVous).insert(RendezVousCompanion.insert(
-          idClient: clients[2].id, // Marie Petit
+          idClient: clients[2].id,
           date: today.add(const Duration(hours: 16)),
           heure: '16:00',
           duree: const Duration(minutes: 30),
@@ -338,7 +439,11 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 4,
             idClient: clients[0].id,
-            dateReservation: today,
+            type: TypeReservation.location,
+            montantTotal: 250.0,
+            statut: 'EC',
+            dateReservation: today
+                .subtract(const Duration(days: 2)), // Réservé il y a 2 jours
             dateSortie: today,
             dateRetour: Value(today.add(const Duration(days: 5))),
           ),
@@ -348,7 +453,11 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 5,
             idClient: clients[1].id,
-            dateReservation: today,
+            type: TypeReservation.location,
+            montantTotal: 120.0,
+            statut: 'EC',
+            dateReservation: today
+                .subtract(const Duration(days: 3)), // Réservé il y a 3 jours
             dateSortie: today,
             dateRetour: Value(today.add(const Duration(days: 7))),
           ),
@@ -358,7 +467,11 @@ class DatabaseSeeder {
           ReservationsCompanion.insert(
             idVetement: 6,
             idClient: clients[2].id,
-            dateReservation: today,
+            type: TypeReservation.location,
+            montantTotal: 85.0,
+            statut: 'EC',
+            dateReservation:
+                today.subtract(const Duration(days: 1)), // Réservé hier
             dateSortie: today,
             dateRetour: Value(today.add(const Duration(days: 6))),
           ),

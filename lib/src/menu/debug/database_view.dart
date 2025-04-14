@@ -1,7 +1,4 @@
-import 'dart:developer';
-
-import 'package:drift/drift.dart'
-    show OrderingMode, OrderingTerm, TableOrViewStatements;
+import 'package:drift/drift.dart' show OrderingMode, OrderingTerm;
 import 'package:flutter/material.dart';
 import '../../../database/database.dart';
 import '../../theme/app_theme.dart';
