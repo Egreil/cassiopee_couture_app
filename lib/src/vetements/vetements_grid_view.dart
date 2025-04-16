@@ -59,16 +59,9 @@ class _VetementsGridViewState extends State<VetementsGridView> {
     return Scaffold(
       backgroundColor: AppTheme.blancCasse,
       appBar: AppBar(
-        title: const Text('Catalogue'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            tooltip: selectedClient == null
-                ? 'Sélectionner un client'
-                : '${selectedClient!.prenom} ${selectedClient!.nom}',
-            onPressed: _showClientSelector,
-          ),
-        ],
+        title: Text(selectedClient != null
+            ? 'Mme ${selectedClient?.nom}'
+            : 'Catalogue'),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: _buildFilterBar(),
@@ -434,28 +427,6 @@ class _VetementsGridViewState extends State<VetementsGridView> {
       }
       return results;
     });
-  }
-
-  Future<void> _showClientSelector() async {
-    final client = await showDialog<Client>(
-      context: context,
-      builder: (context) => ClientSelectorDialog(database: widget.database),
-    );
-
-    if (client != null) {
-      setState(() {
-        selectedClient = client;
-        _showOnlyFavorites = false;
-      });
-      await _loadFavoris();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Client sélectionné : ${client.prenom} ${client.nom}')),
-        );
-      }
-    }
   }
 }
 
